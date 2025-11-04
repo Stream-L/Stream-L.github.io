@@ -1,0 +1,18 @@
+{{ define "main" }}
+    {{ $pages := .Pages }}
+    {{ if .IsHome }}
+        {{ $pages = where site.RegularPages "Type" "in" site.Params.mainSections }}
+    {{ end }}
+
+    <section class="article-list--compact">
+        {{ range $index, $element := $pages }}
+            {{ partial "article-list/compact" . }}
+        {{ end }}
+    </section>
+    
+    {{- partial "pagination.html" . -}}
+{{ end }}
+
+{{ define "aside" }}
+    {{- partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") -}}
+{{ end }}

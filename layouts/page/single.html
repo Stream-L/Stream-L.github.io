@@ -1,0 +1,74 @@
+{{ define "main" }}
+<div class="article-container">
+  <article class="article-content">
+    <header class="article-header">
+      <h1 class="article-title">{{ .Title }}</h1>
+      {{- with .Params.description -}}
+      <p class="article-subtitle">{{ . }}</p>
+      {{- end -}}
+    </header>
+
+    <div class="article-body">
+      {{ .Content }}
+      
+      {{- if .Pages -}}
+      <div class="resource-sections">
+        {{- range .Pages -}}
+        <div class="resource-card">
+          <h3 class="resource-title">
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+          </h3>
+          {{- with .Params.description -}}
+          <p class="resource-description">{{ . }}</p>
+          {{- end -}}
+        </div>
+        {{- end -}}
+      </div>
+      {{- end -}}
+    </div>
+  </article>
+</div>
+
+<style>
+.resource-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.resource-card {
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--card-background);
+  border: 1px solid var(--card-border-color);
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.resource-title {
+  margin: 0 0 10px 0;
+  font-size: 1.2em;
+}
+
+.resource-title a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.resource-title a:hover {
+  color: var(--link-hover-color);
+}
+
+.resource-description {
+  margin: 0;
+  color: var(--secondary-text-color);
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+</style>
+{{ end }}

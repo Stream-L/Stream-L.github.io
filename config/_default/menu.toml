@@ -1,0 +1,45 @@
+# 可以添加的可以根据说明文件查看
+# 说明文件：https://github.com/stack-docs/zh-Hans/blob/main/docs/menu.md
+# [main.params]
+# icon = "home"
+# newTab = false
+# weight = 1
+
+[[social]]
+identifier = "github"
+name = "GitHub"
+url = "https://github.com/Stream-L"
+[social.params]
+icon = "brand-github"
+
+# [[social]]
+# identifier = "twitter"
+# name = "Twitter"
+# url = "https://twitter.com"
+# [social.params]
+# icon = "brand-twitter"
+
+[[social]]
+identifier = "bilibili"
+name = "Bilibili"
+url = "https://space.bilibili.com/14423730"
+[social.params]
+icon = "brand-bilibili"
+
+# pexels.com
+[[social]]
+identifier = "pexels"
+name = "Pexels"
+url = "https://www.pexels.com/zh-cn/@stream-99817764/"
+[social.params]
+icon = "brand-pexels"
+
+# RSS
+[[social]]
+identifier = "rss"
+name = "RSS"
+url = "/podcast.xml"
+# https://stream-l.github.io/podcast.xml
+[social.params]
+icon = "rss"
+newTab = true

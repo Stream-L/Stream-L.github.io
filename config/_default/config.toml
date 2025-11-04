@@ -1,0 +1,54 @@
+baseurl = "https://stream-l.github.io"
+languageCode = "zh-cn"
+theme = "hugo-theme-stack"
+title = "Stream-L's Blog"
+copyright = "Stream-L"
+defaultContentLanguage = "zh-cn"
+defaultContentLanguageInSubdir = false
+
+# RSS 配置
+[outputs]
+home = ["HTML", "RSS", "JSON"]
+
+[outputFormats.RSS]
+mediaType = "application/rss+xml"
+baseName = "podcast"
+
+[pagination]
+pagerSize = 5
+
+# RSS 限制最新 10 篇文章
+rssLimit = 10
+
+# Markdown 渲染配置
+[markup]
+[markup.highlight]
+noClasses = false
+codeFences = true
+guessSyntax = true
+lineNos = true
+lineNumbersInTable = true
+tabWidth = 4
+style = "monokai"
+
+[markup.goldmark.renderer]
+unsafe = true
+
+[markup.tableOfContents]
+endLevel = 4
+ordered = true
+startLevel = 2
+
+[languages.zh-cn]
+languageName = "中文"
+title = "Stream-L的博客"
+weight = 1
+[languages.zh-cn.params]
+description = "青春气贯长虹"
+
+[languages.en]
+languageName = "English"
+title = "Life goes on"
+weight = 2
+[languages.en.params]
+description = "My personal blog"

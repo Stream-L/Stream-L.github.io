@@ -1,0 +1,39 @@
+{{ define "body-class" }}article-page{{ end }}
+
+{{ define "main" }}
+<article class="main-article">
+    <!-- 面包屑导航 -->
+    <nav class="breadcrumb" style="margin: var(--card-padding); margin-bottom: 0; padding: 1rem 1.5rem; background: var(--body-background); border-radius: var(--card-border-radius); border: 1px solid var(--card-separator-color);">
+        <ol style="display: flex; list-style: none; padding: 0; margin: 0; gap: 0.8rem; flex-wrap: wrap; align-items: center; font-size: 1rem;">
+            {{ range .Ancestors.Reverse }}
+                <li style="display: flex; align-items: center;">
+                    <a href="{{ .Permalink }}" style="color: var(--accent-color); text-decoration: none; transition: opacity 0.3s ease;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                        {{ .Title }}
+                    </a>
+                    <span style="margin: 0 0.75rem; color: var(--card-text-color-tertiary); font-weight: 300;">›</span>
+                </li>
+            {{ end }}
+            <li style="color: var(--card-text-color-main); font-weight: 600;">
+                {{ .Title }}
+            </li>
+        </ol>
+    </nav>
+
+    {{- partial "article/components/header" . -}}
+
+    {{- partial "article/components/content" . -}}
+
+    {{- partial "article/components/footer" . -}}
+
+    {{- if not (eq .Params.comments false) -}}
+        {{- partial "comments/include" . -}}
+    {{- end -}}
+</article>
+
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ if .Params.toc }}
+        {{ partial "sidebar/right.html" (dict "Context" . "Scope" "page") }}
+    {{ end }}
+{{ end }}

@@ -1,0 +1,29 @@
+name: Update theme
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Update theme
+        run: |
+          git submodule update --remote --merge
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add themes/hugo-theme-stack
+          git diff --quiet && git diff --staged --quiet || (git commit -m "CI: Update theme" && git push)
