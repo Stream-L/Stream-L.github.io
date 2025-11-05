@@ -1,4 +1,4 @@
----
+﻿---
 title: Zotero颜色标签和Emoji装饰设置
 description: 美化你的Zotero文献管理器,使用颜色标签和Emoji让文献管理更直观
 slug: zotero-emoji-tags
@@ -12,6 +12,7 @@ tags:
     - 文献管理
     - 效率工具
     - 美化
+draft: false
 ---
 通过设置颜色标签和Emoji装饰,让你的Zotero文献库更加美观和易用。
 

@@ -1,4 +1,4 @@
----
+﻿---
 title: 使用Zotero解决知网仅保存快照的问题
 description: 解决Zotero保存知网文献时只能保存快照的问题,完整教程
 slug: zotero-cnki-fix
@@ -12,6 +12,7 @@ tags:
     - 知网
     - 文献管理
     - 问题解决
+draft: false
 ---
 使用Zotero网页插件保存知网文献时总是报错?本文教你如何解决这个问题。
 
