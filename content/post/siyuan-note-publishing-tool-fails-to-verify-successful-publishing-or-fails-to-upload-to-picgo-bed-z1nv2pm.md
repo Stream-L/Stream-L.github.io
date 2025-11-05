@@ -22,7 +22,7 @@ isCJKLanguage: true
 
 
 
-![image](assets/31e10877-6e2e-4404-ab04-e8bee6073337-20251106013011-484qkr7.png)
+![image](https://s2.loli.net/2025/11/06/x6nwGHRCOXgFky4.png)
 
 # 思源笔记发布工具验证成功发布失败或Picgo图床上传失败
 
@@ -38,7 +38,7 @@ isCJKLanguage: true
 
 重新进行发布流程，弹出提示：
 
-![31e10877-6e2e-4404-ab04-e8bee6073337](assets/31e10877-6e2e-4404-ab04-e8bee6073337-20251106013011-484qkr7.png " © 操作失败=>TypeError: this.logger.errot is not a function ")
+![31e10877-6e2e-4404-ab04-e8bee6073337](https://s2.loli.net/2025/11/06/x6nwGHRCOXgFky4.png)
 
 ![image](https://s2.loli.net/2025/11/06/Klg8ImQt9FO6DXT.png "发布到[]失败!详细错误 操作耗时:0 ms")
 
