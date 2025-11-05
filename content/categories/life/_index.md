@@ -1,7 +1,7 @@
 ---
 title: 生活
 description: 记录生活点滴,分享日常感悟
-image:
+image: img/life.png
 
 # Badge style
 style:

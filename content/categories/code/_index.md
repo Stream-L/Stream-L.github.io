@@ -1,7 +1,7 @@
 ---
 title: 代码备份
 description: 各类实验和项目代码的备份记录
-image:
+image: img/code.png
 
 # Badge style
 style:
