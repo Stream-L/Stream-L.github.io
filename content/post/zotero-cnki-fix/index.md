@@ -5,7 +5,7 @@ slug: zotero-cnki-fix
 date: 2025-11-01 00:00:00+0000
 image: assets/37abe810090a4b8b70a32cd68b7cd832-20251101013845-cn0ffkl.png
 categories:
-    - 科研工具/Zotero
+    - Zotero
     - 图文教程
 tags:
     - Zotero
