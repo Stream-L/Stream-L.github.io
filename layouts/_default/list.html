@@ -1,21 +1,4 @@
 {{ define "main" }}
-    <!-- 面包屑导航 -->
-    <nav class="breadcrumb" style="margin-bottom: 2rem; padding: 1rem 1.5rem; background: var(--card-background); border-radius: var(--card-border-radius); box-shadow: var(--shadow-l1);">
-        <ol style="display: flex; list-style: none; padding: 0; margin: 0; gap: 0.8rem; flex-wrap: wrap; align-items: center; font-size: 1.5rem;">
-            {{ range .Ancestors.Reverse }}
-                <li style="display: flex; align-items: center;">
-                    <a href="{{ .Permalink }}" style="color: var(--accent-color); text-decoration: none; transition: opacity 0.3s ease;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-                        {{ .Title }}
-                    </a>
-                    <span style="margin: 0 0.75rem; color: var(--card-text-color-tertiary); font-weight: 300;">›</span>
-                </li>
-            {{ end }}
-            <li style="color: var(--card-text-color-main); font-weight: 600;">
-                {{ .Title }}
-            </li>
-        </ol>
-    </nav>
-
     <header>
         <h3 class="section-title">
             {{ if eq .Parent (.GetPage "/") }}
@@ -72,13 +55,15 @@
     {{- end -}}
 
     {{- with $subsections -}}
-        <aside class="subsection-list">
+        <aside>
             <h2 class="section-title">{{ T "list.subsection" (len $subsections) }}</h2>
-            <section class="article-list--compact">
-                {{ range . }}
-                    {{ partial "article-list/compact" . }}
-                {{ end }}
-            </section>
+            <div class="subsection-list">
+                <div class="article-list--tile">
+                    {{ range . }}
+                        {{ partial "article-list/tile" (dict "context" . "size" "250x150" "Type" "section") }}
+                    {{ end }}
+                </div>
+            </div>
         </aside>
     {{- end -}}
     

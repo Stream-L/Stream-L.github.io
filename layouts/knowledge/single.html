@@ -33,7 +33,13 @@
 {{ end }}
 
 {{ define "right-sidebar" }}
-    {{ if .Params.toc }}
+    {{- $TOCManuallyDisabled := eq .Params.toc false -}}
+    {{- $TOCEnabled := not $TOCManuallyDisabled -}}
+    {{- $hasTOC := ge (len .TableOfContents) 100 -}}
+    {{- .Scratch.Set "TOCEnabled" (and $TOCEnabled $hasTOC) -}}
+    {{- .Scratch.Set "hasWidget" (or $TOCEnabled $hasTOC) -}}
+    
+    {{ if .Scratch.Get "hasWidget" }}
         {{ partial "sidebar/right.html" (dict "Context" . "Scope" "page") }}
     {{ end }}
 {{ end }}
