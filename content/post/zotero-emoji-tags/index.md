@@ -5,13 +5,11 @@ slug: zotero-emoji-tags
 date: 2025-11-01 00:00:00+0000
 image: assets/0ff7f30780d0e755de3c88e1aaf5d367-20251101015942-rf5kawk.png
 categories:
-    - Zotero
     - 图文教程
 tags:
     - Zotero
     - 文献管理
     - 效率工具
-    - 美化
 draft: false
 ---
 通过设置颜色标签和Emoji装饰,让你的Zotero文献库更加美观和易用。
