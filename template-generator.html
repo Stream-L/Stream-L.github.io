@@ -1,0 +1,1418 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zotero笔记模板生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .panel {
+            padding: 30px;
+        }
+
+        .config-panel {
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .code-panel {
+            background: #f5f5f5;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .section {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .config-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .config-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="color"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="color"] {
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .metadata-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .section-list {
+            margin-top: 15px;
+        }
+
+        .section-card {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .section-card-header {
+            display: grid;
+            grid-template-columns: 1fr 150px 80px;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .section-card-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .section-card-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .section-card-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .subsection-list {
+            margin-top: 10px;
+        }
+
+        .subsection-header {
+            display: grid;
+            grid-template-columns: 200px 1fr 40px;
+            gap: 10px;
+            padding: 8px 10px;
+            background: #f0f0f0;
+            font-weight: 600;
+            color: #555;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .subsection-item {
+            display: grid;
+            grid-template-columns: 200px 1fr 40px;
+            gap: 10px;
+            padding: 8px 10px;
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            align-items: center;
+        }
+
+        .subsection-item:last-child {
+            border-radius: 0 0 4px 4px;
+        }
+
+        .subsection-item input[type="text"] {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        .btn-remove {
+            background: #EF5350;
+            color: white;
+            border: none;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            width: 32px;
+            height: 32px;
+        }
+
+        .btn-remove:hover {
+            background: #D32F2F;
+        }
+
+        .btn-add-sub {
+            background: #42A5F5;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .btn-add-sub:hover {
+            background: #1E88E5;
+        }
+
+        .btn-add {
+            background: #66BB6A;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .btn-add:hover {
+            background: #4CAF50;
+        }
+
+        .btn-import {
+            background: #42A5F5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+
+        .btn-import:hover {
+            background: #2196F3;
+        }
+
+        .old-section-item {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-preview {
+            display: none; /* 隐藏预览框，直接使用color picker */
+        }
+
+        input[type="color"] {
+            width: 60px;
+            height: 35px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 2px;
+        }
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .section-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .sub-item {
+            background: #f9f9f9;
+            border-left: 3px solid #667eea;
+            padding: 10px;
+            margin: 8px 0 8px 20px;
+            border-radius: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .code-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .drag-handle {
+            cursor: move;
+            color: #999;
+            margin-right: 10px;
+        }
+
+        .emoji-picker {
+            width: 60px;
+        }
+
+        small {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .help-btn {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 8px;
+            position: relative;
+        }
+
+        .help-btn:hover {
+            background: #5568d3;
+        }
+
+        .help-btn .tooltip {
+            visibility: hidden;
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            white-space: pre-line;
+            font-size: 13px;
+            line-height: 1.6;
+            z-index: 1000;
+            min-width: 350px;
+            max-width: 450px;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .help-btn:hover .tooltip {
+            visibility: visible;
+        }
+
+        .help-btn .tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #333;
+        }
+
+        .preview-hint {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧配置面板 -->
+        <div class="panel config-panel">
+            <h1>📝 Zotero笔记模板生成器
+                <span class="help-btn">?
+                    <span class="tooltip">📖 笔记模板添加方式：
+1. 安装Better Notes 插件
+2. 打开模板编辑器
+   Zotero > 编辑 > 设置 > Better Notes
+   向下滚动，在模板部分点击"打开模板编辑器"按钮
+3. 新建模板：左下角"新建"模板
+   选择新建的模板（最下面，红色，名称为 New Template:……）
+4. 设置模板：模板类型选为条目，模板名称自定义
+   将当前生成器生成的代码粘贴到模板编辑器中
+   点击左下角的保存即可刷新预览</span>
+                </span>
+            </h1>
+            <p class="subtitle">可视化配置Better Notes模板</p>
+
+            <!-- 标题设置 -->
+            <div class="section" style="margin-bottom: 20px;">
+                <div class="section-title">🏷️ 笔记标题设置</div>
+                
+                <div class="form-group">
+                    <label>自定义标题前缀 (可留空)</label>
+                    <input type="text" id="customTitlePrefix" placeholder="例如: 【阅读笔记】、Reading Notes: 等">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="appendOriginalTitle" checked>
+                    <label for="appendOriginalTitle">在自定义标题后追加原文标题</label>
+                </div>
+                
+                <small style="color: #999; display: block; margin-top: 8px;">
+                    💡 如果不填写自定义标题且不勾选追加,将只显示原文标题
+                </small>
+            </div>
+
+            <!-- 元数据模块 -->
+            <div class="section">
+                <div class="section-title">💡 元数据模块</div>
+                
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>语言</label>
+                        <select id="metaLang">
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>颜色1</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="metaColor1" value="#dbeedd">
+                            <input type="text" id="metaColorText1" value="#dbeedd" style="width: 90px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>颜色2</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="metaColor2" value="#f3faf4">
+                            <input type="text" id="metaColorText2" value="#f3faf4" style="width: 90px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>可选元数据字段 (勾选后仅在存在时显示)</label>
+                    <div class="metadata-fields" id="metadataFields">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_title" checked>
+                            <label for="field_title">标题</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_journal" checked>
+                            <label for="field_journal">期刊</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_date" checked>
+                            <label for="field_date">日期</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_authors" checked>
+                            <label for="field_authors">作者</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_language" checked>
+                            <label for="field_language">语言</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_itemType" checked>
+                            <label for="field_itemType">文献类型</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_doi" checked>
+                            <label for="field_doi">DOI</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_url" checked>
+                            <label for="field_url">链接</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_pages" checked>
+                            <label for="field_pages">页码</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_volume" checked>
+                            <label for="field_volume">卷期</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_attachment" checked>
+                            <label for="field_attachment">附件</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="field_abstract" checked>
+                            <label for="field_abstract">摘要</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>标题翻译 (二选一)</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="titleOption1" name="titleTranslation" value="show" checked>
+                            <label for="titleOption1">显示翻译</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="titleOption2" name="titleTranslation" value="replace">
+                            <label for="titleOption2">覆盖原文</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="titleOption3" name="titleTranslation" value="none">
+                            <label for="titleOption3">不显示</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>摘要翻译 (二选一)</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="abstractOption1" name="abstractTranslation" value="show" checked>
+                            <label for="abstractOption1">显示翻译</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="abstractOption2" name="abstractTranslation" value="replace">
+                            <label for="abstractOption2">覆盖原文</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="abstractOption3" name="abstractTranslation" value="none">
+                            <label for="abstractOption3">不显示</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>日期与作者显示方式</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="dateAuthorsOption1" name="dateAuthorsDisplay" value="merged" checked>
+                            <label for="dateAuthorsOption1">合并显示</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="dateAuthorsOption2" name="dateAuthorsDisplay" value="separate">
+                            <label for="dateAuthorsOption2">分开显示</label>
+                        </div>
+                    </div>
+                    <small style="color: #999; display: block; margin-top: 5px;">
+                        💡 合并显示: 2023 - John Smith; Jane Doe (节省空间,适合综述)
+                    </small>
+                </div>
+            </div>
+
+            <!-- 笔记章节 -->
+            <div class="section">
+                <div class="section-title">📒 笔记章节
+                    <span class="help-btn">?
+                        <span class="tooltip">📋 从剪贴板导入章节的格式：
+
+1. 如有Style且设置了标注颜色可以使用
+2. 打开标注颜色管理：有两种方式
+   ① Shift+P > 标注
+   ② Zotero > 编辑 > 设置 > Style
+      向下滚动 阅读界面 > 标注颜色 > 编辑
+3. 导出颜色组：在左侧选择Group
+   确定后点击右上角的Export
+   将标注名和颜色复制到粘贴板中
+4. 导入模板编辑器：点击导入
+   原标注名会识别为章节名称
+   颜色会识别为章节标题的底色
+
+支持格式：[["标题","#颜色"]]</span>
+                    </span>
+                </div>
+                
+                <div class="section-list">
+
+                    <div id="noteSections"></div>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <button class="btn-add" onclick="addSection()">➕ 添加章节</button>
+                    <button class="btn-import" onclick="importFromClipboard()">📋 从剪贴板导入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧预览/代码面板 -->
+        <div class="panel code-panel">
+            <div class="preview-hint">
+                💡 提示：使用 <code>$</code> 表示的内容导入Better Notes后会被替换，请忽略
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="generateCode()">🔄 生成代码</button>
+                <button class="btn btn-secondary" onclick="previewTemplate()">👁️ 预览效果</button>
+                <button class="btn btn-secondary" onclick="copyCode()">📋 复制代码</button>
+                <button class="btn btn-secondary" onclick="downloadCode()">💾 下载模板</button>
+            </div>
+            <div class="code-output" id="codeOutput">点击"生成代码"按钮来生成模板代码...</div>
+        </div>
+    </div>
+
+    <script>
+        // 颜色选择器同步
+        function setupColorPicker(colorId, textId) {
+            const colorInput = document.getElementById(colorId);
+            const textInput = document.getElementById(textId);
+
+            colorInput.addEventListener('input', (e) => {
+                textInput.value = e.target.value;
+            });
+
+            textInput.addEventListener('input', (e) => {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    colorInput.value = e.target.value;
+                }
+            });
+        }
+
+        setupColorPicker('metaColor1', 'metaColorText1');
+        setupColorPicker('metaColor2', 'metaColorText2');
+
+        // 章节管理
+        let sectionCount = 0;
+        let sections = {}; // 存储所有章节数据
+
+        // 添加章节
+        function addSection(title = '核心贡献', bgColor = '#FFEB3B') {
+            sectionCount++;
+            const sectionId = sectionCount;
+            
+            sections[sectionId] = {
+                title: title,
+                bgColor: bgColor,
+                subsections: []
+            };
+            
+            renderSections();
+        }
+
+        // 添加子章节
+        function addSubsection(sectionId) {
+            if (!sections[sectionId].subsections) {
+                sections[sectionId].subsections = [];
+            }
+            sections[sectionId].subsections.push({
+                title: '',
+                prompt: ''
+            });
+            renderSections();
+        }
+
+        // 删除章节
+        function deleteSection(sectionId) {
+            delete sections[sectionId];
+            renderSections();
+        }
+
+        // 删除子章节
+        function deleteSubsection(sectionId, subIndex) {
+            sections[sectionId].subsections.splice(subIndex, 1);
+            renderSections();
+        }
+
+        // 更新章节标题
+        function updateSectionTitle(sectionId, value) {
+            if (sections[sectionId]) {
+                sections[sectionId].title = value;
+            }
+        }
+
+        // 更新章节颜色
+        function updateSectionColor(sectionId, value) {
+            if (sections[sectionId]) {
+                sections[sectionId].bgColor = value;
+            }
+        }
+
+        // 更新子章节
+        function updateSubsection(sectionId, subIndex, field, value) {
+            if (sections[sectionId] && sections[sectionId].subsections[subIndex]) {
+                sections[sectionId].subsections[subIndex][field] = value;
+            }
+        }
+
+        // 渲染所有章节
+        function renderSections() {
+            const container = document.getElementById('noteSections');
+            container.innerHTML = '';
+            
+            Object.keys(sections).forEach(sectionId => {
+                const section = sections[sectionId];
+                const card = document.createElement('div');
+                card.className = 'section-card';
+                
+                let subsectionsHtml = '';
+                if (section.subsections && section.subsections.length > 0) {
+                    subsectionsHtml = `
+                        <div class="subsection-list">
+                            <div class="subsection-header">
+                                <div>子章节标题</div>
+                                <div>子章节提示</div>
+                                <div>操作</div>
+                            </div>
+                            ${section.subsections.map((sub, subIndex) => `
+                                <div class="subsection-item">
+                                    <input type="text" 
+                                           value="${sub.title || ''}" 
+                                           placeholder="例如: 研究方法"
+                                           onchange="updateSubsection(${sectionId}, ${subIndex}, 'title', this.value)">
+                                    <input type="text" 
+                                           value="${sub.prompt || ''}" 
+                                           placeholder="例如: 作者使用了什么研究方法？"
+                                           onchange="updateSubsection(${sectionId}, ${subIndex}, 'prompt', this.value)">
+                                    <button class="btn-remove" 
+                                            onclick="deleteSubsection(${sectionId}, ${subIndex})" 
+                                            title="删除">✕</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                card.innerHTML = `
+                    <div class="section-card-header">
+                        <div class="section-card-field">
+                            <label class="section-card-label">章节标题</label>
+                            <input type="text" 
+                                   class="section-card-title"
+                                   value="${section.title}" 
+                                   placeholder="例如: 核心贡献"
+                                   onchange="updateSectionTitle(${sectionId}, this.value)">
+                        </div>
+                        <div class="section-card-field">
+                            <label class="section-card-label">背景色</label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" 
+                                       id="sectionColor${sectionId}" 
+                                       value="${section.bgColor}"
+                                       onchange="updateSectionColor(${sectionId}, this.value); document.getElementById('sectionColorText${sectionId}').value = this.value;">
+                                <input type="text" 
+                                       id="sectionColorText${sectionId}" 
+                                       value="${section.bgColor}" 
+                                       style="width: 70px;"
+                                       onchange="updateSectionColor(${sectionId}, this.value); document.getElementById('sectionColor${sectionId}').value = this.value;">
+                            </div>
+                        </div>
+                        <button class="btn-remove" onclick="deleteSection(${sectionId})" title="删除章节" style="margin-top: 20px;">✕</button>
+                    </div>
+                    ${subsectionsHtml}
+                    <button class="btn-add-sub" onclick="addSubsection(${sectionId})">➕ 添加子章节</button>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 从剪贴板导入章节
+        async function importFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                // 尝试解析JSON数组: [["核心贡献","#FFEB3B"],["算法核心","#42A5F5"],...]
+                const importData = JSON.parse(text);
+                
+                if (!Array.isArray(importData)) {
+                    throw new Error('剪贴板内容不是数组格式');
+                }
+                
+                // 清空现有章节
+                sections = {};
+                sectionCount = 0;
+                
+                // 添加导入的章节
+                importData.forEach(([title, color]) => {
+                    if (title && color) {
+                        addSection(title, color);
+                    }
+                });
+                
+                alert(`成功导入 ${importData.length} 个章节！`);
+            } catch (error) {
+                alert(`导入失败：${error.message}\n\n请确保剪贴板内容格式为：\n[["标题1","#颜色1"],["标题2","#颜色2"]]`);
+            }
+        }
+
+        // 生成代码
+        function generateCode() {
+            const lang = document.getElementById('metaLang').value;
+            const color1 = document.getElementById('metaColorText1').value;
+            const color2 = document.getElementById('metaColorText2').value;
+            
+            const customTitlePrefix = document.getElementById('customTitlePrefix').value.trim();
+            const appendOriginalTitle = document.getElementById('appendOriginalTitle').checked;
+            
+            const titleTranslationOption = document.querySelector('input[name="titleTranslation"]:checked').value;
+            const abstractTranslationOption = document.querySelector('input[name="abstractTranslation"]:checked').value;
+            const dateAuthorsDisplay = document.querySelector('input[name="dateAuthorsDisplay"]:checked').value;
+            
+            const langText = {
+                zh: {
+                    metaTitle: '元数据',
+                    title: '标题',
+                    titleTranslation: '标题翻译',
+                    journal: '期刊',
+                    dateAuthors: '日期与作者',
+                    language: '语言',
+                    itemType: '文献类型',
+                    doi: 'DOI',
+                    url: '链接',
+                    pages: '页码',
+                    volume: '卷期',
+                    attachment: '附件',
+                    abstract: '摘要',
+                    abstractTranslation: '摘要翻译'
+                },
+                en: {
+                    metaTitle: 'Metadata',
+                    title: 'Title',
+                    titleTranslation: 'Title Translation',
+                    journal: 'Journal',
+                    dateAuthors: 'Date & Authors',
+                    language: 'Language',
+                    itemType: 'Item Type',
+                    doi: 'DOI',
+                    url: 'URL',
+                    pages: 'Pages',
+                    volume: 'Volume/Issue',
+                    attachment: 'Attachment',
+                    abstract: 'Abstract',
+                    abstractTranslation: 'Abstract Translation'
+                }
+            };
+
+            const t = langText[lang];
+            
+            // 生成标题逻辑
+            let titleCode = '';
+            if (customTitlePrefix && appendOriginalTitle) {
+                // 有前缀且追加原标题 (中间加空格)
+                titleCode = `<h1 style="text-align: center">${customTitlePrefix} \${topItem.getField('title') || '无标题'}</h1>\n`;
+            } else if (customTitlePrefix && !appendOriginalTitle) {
+                // 只有前缀,不追加原标题
+                titleCode = `<h1 style="text-align: center">${customTitlePrefix}</h1>\n`;
+            } else {
+                // 没有前缀,显示原标题
+                titleCode = `<h1 style="text-align: center">\${topItem.getField('title') || '无标题'}</h1>\n`;
+            }
+            
+            let code = titleCode;
+            code += `<hr/>\n`;
+            code += `<h2 style="color: #1B5E20; background-color:#F1F8E9;">💡 ${t.metaTitle}</h2>\n\n`;
+            code += `<table>\n`;
+            
+            // 可选字段: 标题
+            let useColor = color1;
+            
+            if (document.getElementById('field_title').checked) {
+                const replaceTitleWithTranslation = titleTranslationOption === 'replace';
+                const showTitleTranslation = titleTranslationOption === 'show';
+                
+                if (replaceTitleWithTranslation) {
+                    code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">${t.title}</th>\n`;
+                    code += `        <td style="background-color:${useColor};">\${{
+            try {
+                const titleTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "titleTranslation");
+                return titleTranslation && titleTranslation.trim() ? titleTranslation : topItem.getField('title');
+            } catch (e) {
+                return topItem.getField('title');
+            }
+        }}\$</td>\n    </tr>\n`;
+                } else {
+                    code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">${t.title}</th>\n`;
+                    code += `        <td style="background-color:${useColor};">\${topItem.getField('title') || '无标题'}</td>\n    </tr>\n`;
+                    useColor = useColor === color1 ? color2 : color1;
+                    
+                    if (showTitleTranslation) {
+                        code += `    \${{
+        try {
+            const titleTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "titleTranslation");
+            if (titleTranslation && titleTranslation.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.titleTranslation}</th>
+                    <td style="background-color:${useColor}; font-style: italic;">\${titleTranslation}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                        useColor = useColor === color1 ? color2 : color1;
+                    }
+                }
+            } else {
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            // 可选字段: 期刊
+            if (document.getElementById('field_journal').checked) {
+                code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">${t.journal}</th>\n`;
+                code += `        <td style="background-color:${useColor};">\${topItem.getField('publicationTitle') || '无期刊信息'} 
+            \${{
+                try {
+                    const nodes = Zotero.ZoteroStyle.api.renderCell(topItem, "publicationTags").childNodes;
+                    if (nodes && nodes.length) {
+                        return Array.prototype.map.call(nodes, e => {
+                            e.style.marginLeft = '4px';
+                            e.style.marginRight = '4px';
+                            return e.outerHTML;
+                        }).join(' ');
+                    }
+                    return ' 🈚';
+                } catch (e) {
+                    return ' 🈚';
+                }
+            }}\$</td>\n    </tr>\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            // 可选字段: 日期与作者
+            const dateChecked = document.getElementById('field_date').checked;
+            const authorsChecked = document.getElementById('field_authors').checked;
+            
+            if (dateAuthorsDisplay === 'merged' && (dateChecked || authorsChecked)) {
+                // 合并显示模式
+                code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">${t.dateAuthors}</th>\n`;
+                code += `        <td style="background-color:${useColor};">\${topItem.getField('date')?.substring(0,4) || '无年份'} - 
+            \${topItem.getCreators()?.length 
+                ? topItem.getCreators().map(v => \`\${v.firstName || ''} \${v.lastName || ''}\`).join("; ").trim() 
+                : '无作者信息'}</td>\n    </tr>\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            } else {
+                // 分开显示模式
+                if (dateChecked) {
+                    code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">日期</th>\n`;
+                    code += `        <td style="background-color:${useColor};">\${topItem.getField('date')?.substring(0,4) || '无年份'}</td>\n    </tr>\n`;
+                    useColor = useColor === color1 ? color2 : color1;
+                }
+                
+                if (authorsChecked) {
+                    code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">作者</th>\n`;
+                    code += `        <td style="background-color:${useColor};">\${topItem.getCreators()?.length 
+                ? topItem.getCreators().map(v => \`\${v.firstName || ''} \${v.lastName || ''}\`).join("; ").trim() 
+                : '无作者信息'}</td>\n    </tr>\n`;
+                    useColor = useColor === color1 ? color2 : color1;
+                }
+            }
+            
+            // 其他可选字段
+            
+            if (document.getElementById('field_language').checked) {
+                code += `    \${{
+        try {
+            const language = topItem.getField('language');
+            if (language) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.language}</th>
+                    <td style="background-color:${useColor};">\${language}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            if (document.getElementById('field_itemType').checked) {
+                code += `    \${{
+        try {
+            const itemType = topItem.itemType;
+            if (itemType) {
+                const typeNames = {
+                    'journalArticle': '期刊论文',
+                    'conferencePaper': '会议论文',
+                    'book': '书籍',
+                    'bookSection': '书籍章节',
+                    'thesis': '学位论文',
+                    'report': '报告'
+                };
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.itemType}</th>
+                    <td style="background-color:${useColor};">\${typeNames[itemType] || itemType}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            if (document.getElementById('field_doi').checked) {
+                code += `    \${topItem.getField('DOI') ? \`
+    <tr>
+        <th style="background-color:${useColor}; text-align: left;">${t.doi}</th>
+        <td style="background-color:${useColor};">
+            <a href="https://doi.org/\${topItem.getField('DOI')}">\${topItem.getField('DOI')}</a>
+        </td>
+    </tr>
+    \` : ''}\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            if (document.getElementById('field_url').checked) {
+                code += `    \${{
+        try {
+            const url = topItem.getField('url');
+            if (url) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.url}</th>
+                    <td style="background-color:${useColor};">
+                        <a href="\${url}">\${url.length > 50 ? url.substring(0, 47) + '...' : url}</a>
+                    </td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            if (document.getElementById('field_pages').checked) {
+                code += `    \${{
+        try {
+            const pages = topItem.getField('pages');
+            if (pages) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.pages}</th>
+                    <td style="background-color:${useColor};">\${pages}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            if (document.getElementById('field_volume').checked) {
+                code += `    \${{
+        try {
+            const volume = topItem.getField('volume');
+            const issue = topItem.getField('issue');
+            if (volume || issue) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.volume}</th>
+                    <td style="background-color:${useColor};">
+                        \${volume ? \`Vol. \${volume}\` : ''}\${volume && issue ? ', ' : ''}\${issue ? \`No. \${issue}\` : ''}
+                    </td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            if (document.getElementById('field_attachment').checked) {
+                code += `    \${(() => {
+        try {
+            const attachments = topItem.getAttachments();
+            if (attachments && attachments.length) {
+                const attachment = Zotero.Items.get(attachments[0]);
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.attachment}</th>
+                    <td style="background-color:${useColor};">
+                        <a href="zotero://open-pdf/0_\${attachment.key}">\${attachment.getFilename() || '附件'}</a>
+                    </td>
+                </tr>
+                \`;
+            }
+            return '';
+        } catch (e) {
+            return '';
+        }
+    })()}\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            // 摘要
+            const replaceAbstractWithTranslation = abstractTranslationOption === 'replace';
+            const showAbstractTranslation = abstractTranslationOption === 'show';
+            
+            if (document.getElementById('field_abstract').checked) {
+                if (replaceAbstractWithTranslation) {
+                    code += `    \${{
+        try {
+            const abstractTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "abstractTranslation");
+            const abstract = topItem.getField('abstractNote');
+            const content = abstractTranslation && abstractTranslation.trim() ? abstractTranslation : abstract;
+            if (content && content.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left; vertical-align: top;">${t.abstract}</th>
+                    <td style="background-color:${useColor}; text-align: justify; line-height: 1.6;">\${content}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                } else {
+                    code += `    \${{
+        try {
+            const abstract = topItem.getField('abstractNote');
+            if (abstract && abstract.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left; vertical-align: top;">${t.abstract}</th>
+                    <td style="background-color:${useColor}; text-align: justify; line-height: 1.6;">\${abstract}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                    useColor = useColor === color1 ? color2 : color1;
+                    
+                    if (showAbstractTranslation) {
+                        code += `    \${{
+        try {
+            const abstractTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "abstractTranslation");
+            if (abstractTranslation && abstractTranslation.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left; vertical-align: top;">${t.abstractTranslation}</th>
+                    <td style="background-color:${useColor}; text-align: justify; line-height: 1.6; font-style: italic;">\${abstractTranslation}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                        useColor = useColor === color1 ? color2 : color1;
+                    }
+                }
+            }
+
+            code += `</table>\n\n`;
+
+            // 生成章节
+            Object.keys(sections).forEach(sectionId => {
+                const section = sections[sectionId];
+                code += `<h2 style="background: ${section.bgColor}; color: #000; padding: 10px 15px; border-radius: 4px; margin-top: 30px;">${section.title}</h2>\n`;
+                
+                if (section.subsections && section.subsections.length > 0) {
+                    section.subsections.forEach(sub => {
+                        if (sub.title) {
+                            code += `<p><strong>${sub.title}：</strong>`;
+                            if (sub.prompt) {
+                                code += `<span style="color: #999; font-style: italic;">${sub.prompt}</span>`;
+                            }
+                            code += `</p>\n`;
+                        }
+                    });
+                } else {
+                    code += `<p>在此填写内容...</p>\n`;
+                }
+                
+                code += `\n`;
+            });
+
+            document.getElementById('codeOutput').textContent = code;
+        }
+
+        // 预览模板
+        function previewTemplate() {
+            const code = document.getElementById('codeOutput').textContent;
+            if (code === '点击"生成代码"按钮来生成模板代码...') {
+                alert('请先生成代码！');
+                return;
+            }
+            
+            // 创建预览HTML，包含样式
+            const previewHTML = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模板预览</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e0e0e0;
+        }
+        th {
+            font-weight: 600;
+            width: 150px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 30px;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 10px 0;
+        }
+        p {
+            line-height: 1.8;
+            margin: 10px 0;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    ${code}
+</body>
+</html>`;
+            
+            // 在新窗口中打开预览
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+        }
+
+        // 复制代码
+        function copyCode() {
+            const code = document.getElementById('codeOutput').textContent;
+            if (code === '点击"生成代码"按钮来生成模板代码...') {
+                alert('请先生成代码！');
+                return;
+            }
+            navigator.clipboard.writeText(code).then(() => {
+                alert('代码已复制到剪贴板！');
+            });
+        }
+
+        // 下载代码
+        function downloadCode() {
+            const code = document.getElementById('codeOutput').textContent;
+            if (code === '点击"生成代码"按钮来生成模板代码...') {
+                alert('请先生成代码！');
+                return;
+            }
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'zotero-template.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 初始化
+        // renderSections(); // 删除这行,因为不需要初始化渲染
+    </script>
+</body>
+</html>

@@ -6,7 +6,6 @@ date: 2024-10-15 00:00:00+0000
 image: 
 categories:
     - 代码备份
-    - 数据处理
 tags:
     - Python
     - Pandas
