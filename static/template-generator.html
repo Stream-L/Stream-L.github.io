@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #F2F2F2;
             padding: 20px;
             min-height: 100vh;
         }
@@ -26,7 +26,7 @@
             gap: 20px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             overflow: hidden;
         }
 
@@ -35,23 +35,23 @@
         }
 
         .config-panel {
-            border-bottom: 2px solid #e0e0e0;
+            border-bottom: 2px solid #F2F2F2;
         }
 
         .code-panel {
-            background: #f5f5f5;
+            background: #FAFAFA;
             max-height: 600px;
             overflow-y: auto;
         }
 
         h1 {
-            color: #333;
+            color: #222222;
             margin-bottom: 10px;
             font-size: 24px;
         }
 
         .subtitle {
-            color: #666;
+            color: #9C9C9C;
             margin-bottom: 30px;
             font-size: 14px;
         }
@@ -59,50 +59,45 @@
         .author-info {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+            justify-content: center;
+            gap: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #9C9C9C;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .author-info:hover {
+            opacity: 1;
         }
 
         .author-info .author-name {
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
+            color: #9C9C9C;
+            font-weight: normal;
         }
 
         .author-info .separator {
-            color: #ccc;
+            color: #9C9C9C;
         }
 
         .author-info a {
-            color: #667eea;
+            color: #9C9C9C;
             text-decoration: none;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            transition: color 0.3s ease;
         }
 
         .author-info a:hover {
-            color: #764ba2;
-            transform: translateX(2px);
-        }
-
-        .author-info a::after {
-            content: '→';
-            font-size: 16px;
+            color: #0069E0;
         }
 
         .section {
-            background: #fafafa;
+            background: #FAFAFA;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #E8E8E8;
         }
 
         .config-sections {
@@ -120,7 +115,7 @@
         .section-title {
             font-size: 18px;
             font-weight: bold;
-            color: #333;
+            color: #222222;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -134,7 +129,7 @@
         label {
             display: block;
             margin-bottom: 5px;
-            color: #555;
+            color: #333333;
             font-size: 14px;
             font-weight: 500;
         }
@@ -144,16 +139,17 @@
         select {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #E8E8E8;
             border-radius: 4px;
             font-size: 14px;
             transition: border-color 0.3s;
+            color: #222222;
         }
 
         input[type="text"]:focus,
         select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #0069E0;
         }
 
         input[type="color"] {
@@ -181,13 +177,14 @@
             padding: 10px;
             background: white;
             border-radius: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid #E8E8E8;
         }
 
         .radio-item {
             display: flex;
             align-items: center;
             gap: 6px;
+            color: #333333;
         }
 
         input[type="radio"] {
@@ -213,7 +210,7 @@
 
         .section-card {
             background: white;
-            border: 2px solid #667eea;
+            border: 2px solid #0069E0;
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 15px;
@@ -226,7 +223,7 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            border-bottom: 2px solid #F2F2F2;
         }
 
         .section-card-field {
@@ -237,13 +234,13 @@
 
         .section-card-label {
             font-size: 12px;
-            color: #666;
+            color: #9C9C9C;
             font-weight: 500;
         }
 
         .section-card-title {
             font-weight: 600;
-            color: #333;
+            color: #222222;
             font-size: 15px;
         }
 
@@ -284,7 +281,7 @@
         }
 
         .btn-remove {
-            background: #EF5350;
+            background: #DB2C3A;
             color: white;
             border: none;
             padding: 6px;
@@ -297,11 +294,11 @@
         }
 
         .btn-remove:hover {
-            background: #D32F2F;
+            background: #C02030;
         }
 
         .btn-add-sub {
-            background: #42A5F5;
+            background: #0069E0;
             color: white;
             border: none;
             padding: 6px 12px;
@@ -312,11 +309,11 @@
         }
 
         .btn-add-sub:hover {
-            background: #1E88E5;
+            background: #0055B8;
         }
 
         .btn-add {
-            background: #66BB6A;
+            background: #0069E0;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -327,11 +324,11 @@
         }
 
         .btn-add:hover {
-            background: #4CAF50;
+            background: #0055B8;
         }
 
         .btn-import {
-            background: #42A5F5;
+            background: #6D6D6D;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -343,7 +340,7 @@
         }
 
         .btn-import:hover {
-            background: #2196F3;
+            background: #555555;
         }
 
         .old-section-item {
@@ -367,34 +364,34 @@
         }
 
         .btn-primary {
-            background: #667eea;
+            background: #0069E0;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5568d3;
+            background: #0055B8;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 105, 224, 0.3);
         }
 
         .btn-secondary {
-            background: #48bb78;
+            background: #6D6D6D;
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #38a169;
+            background: #555555;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+            box-shadow: 0 4px 12px rgba(109, 109, 109, 0.3);
         }
 
         .btn-danger {
-            background: #f56565;
+            background: #DB2C3A;
             color: white;
         }
 
         .btn-danger:hover {
-            background: #e53e3e;
+            background: #C02030;
         }
 
         .checkbox-group {
@@ -422,13 +419,13 @@
         input[type="color"] {
             width: 60px;
             height: 35px;
-            border: 1px solid #ddd;
+            border: 1px solid #E8E8E8;
             border-radius: 4px;
             cursor: pointer;
             padding: 2px;
         }
             background: white;
-            border: 1px solid #ddd;
+            border: 1px solid #E8E8E8;
             border-radius: 6px;
             padding: 15px;
             margin-bottom: 10px;
@@ -442,8 +439,8 @@
         }
 
         .sub-item {
-            background: #f9f9f9;
-            border-left: 3px solid #667eea;
+            background: #FAFAFA;
+            border-left: 3px solid #0069E0;
             padding: 10px;
             margin: 8px 0 8px 20px;
             border-radius: 4px;
@@ -478,7 +475,7 @@
 
         .drag-handle {
             cursor: move;
-            color: #999;
+            color: #9C9C9C;
             margin-right: 10px;
         }
 
@@ -487,7 +484,7 @@
         }
 
         small {
-            color: #999;
+            color: #9C9C9C;
             font-size: 12px;
         }
 
@@ -497,7 +494,7 @@
             height: 18px;
             line-height: 18px;
             text-align: center;
-            background: #667eea;
+            background: #6D6D6D;
             color: white;
             border-radius: 50%;
             font-size: 12px;
@@ -508,7 +505,7 @@
         }
 
         .help-btn:hover {
-            background: #5568d3;
+            background: #555555;
         }
 
         .help-btn .tooltip {
@@ -517,7 +514,7 @@
             top: 25px;
             left: 50%;
             transform: translateX(-50%);
-            background: #333;
+            background: #222222;
             color: white;
             padding: 12px 15px;
             border-radius: 6px;
@@ -542,17 +539,17 @@
             left: 50%;
             transform: translateX(-50%);
             border: 6px solid transparent;
-            border-bottom-color: #333;
+            border-bottom-color: #222222;
         }
 
         .preview-hint {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+            background: #FFF9E6;
+            border: 1px solid #FFE5A0;
             border-radius: 4px;
             padding: 8px 12px;
             margin-bottom: 12px;
             font-size: 13px;
-            color: #856404;
+            color: #6D6D6D;
         }
     </style>
 </head>
@@ -575,13 +572,6 @@
                 </span>
             </h1>
             <p class="subtitle">可视化配置Better Notes模板</p>
-            
-            <!-- 作者信息 -->
-            <div class="author-info">
-                <span class="author-name">👤 作者: Stream-L</span>
-                <span class="separator">|</span>
-                <a href="https://stream-l.github.io/" target="_blank" rel="noopener">访问博客</a>
-            </div>
 
             <!-- 标题设置 -->
             <div class="section" style="margin-bottom: 20px;">
@@ -735,7 +725,7 @@
                         </div>
                     </div>
                     <small style="color: #999; display: block; margin-top: 5px;">
-                        💡 合并显示: 2023 - John Smith; Jane Doe (节省空间,适合综述)
+                        💡 合并显示: 2023 - John Smith; Jane Doe (节省空间)
                     </small>
                 </div>
             </div>
@@ -1462,5 +1452,12 @@
         // 初始化
         // renderSections(); // 删除这行,因为不需要初始化渲染
     </script>
+
+    <!-- 作者信息 -->
+    <div class="author-info">
+        <span class="author-name">作者: Stream-L</span>
+        <span class="separator">|</span>
+        <a href="https://stream-l.github.io/" target="_blank" rel="noopener">博客</a>
+    </div>
 </body>
 </html>
