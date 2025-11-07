@@ -1,1 +1,21 @@
-<script src="/js/viewcount.js" defer></script>
+<!-- vercount 浏览量统计脚本 -->
+<script defer src="https://cn.vercount.one/js"></script>
+
+<!-- 隐藏首页文章列表中的浏览量显示 -->
+<script>
+    function showHideView() {
+        // 判断是否存在vercount标签
+        let viewCounts = document.querySelectorAll("#viewCount");
+        if (viewCounts) {
+            // 判断是否为文章页
+            let article = document.querySelector(".article-page");
+            if (!article) {
+                viewCounts.forEach(ele => {
+                    ele.style.display = 'none';
+                });
+            }
+        }
+    }
+    
+    showHideView();
+</script>

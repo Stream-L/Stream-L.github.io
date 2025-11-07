@@ -46,12 +46,12 @@
             </div>
         {{ end }}
 
-        {{/* 阅读量显示 (使用 CountAPI 或前端降级) */}}
-        {{ $ns := replaceRE "^https?://|/$" "" .Site.BaseURL }}
-        {{ $key := replace (trim .RelPermalink "/") "/" "-" }}
-        <div class="article-views" data-view-namespace="{{ $ns }}" data-view-key="{{ $key }}">
+        <!-- 浏览量统计 -->
+        <div id="viewCount">
             {{ partial "helper/icon" "eye" }}
-            <span class="article-views-count">—</span>
+            <time class="article-time--reading">
+                <span id="vercount_value_page_pv">loading... </span>次
+            </time>
         </div>
     </footer>
     {{ end }}
