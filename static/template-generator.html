@@ -56,6 +56,47 @@
             font-size: 14px;
         }
 
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .author-info .author-name {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .author-info .separator {
+            color: #ccc;
+        }
+
+        .author-info a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .author-info a:hover {
+            color: #764ba2;
+            transform: translateX(2px);
+        }
+
+        .author-info a::after {
+            content: '→';
+            font-size: 16px;
+        }
+
         .section {
             background: #fafafa;
             border-radius: 8px;
@@ -534,6 +575,13 @@
                 </span>
             </h1>
             <p class="subtitle">可视化配置Better Notes模板</p>
+            
+            <!-- 作者信息 -->
+            <div class="author-info">
+                <span class="author-name">👤 作者: Stream-L</span>
+                <span class="separator">|</span>
+                <a href="https://stream-l.github.io/" target="_blank" rel="noopener">访问博客</a>
+            </div>
 
             <!-- 标题设置 -->
             <div class="section" style="margin-bottom: 20px;">
