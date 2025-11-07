@@ -9,6 +9,10 @@
     </header>
 
     <div class="article-body">
+      {{- if .Params.links -}}
+        {{- partial "article/components/links" . -}}
+      {{- end -}}
+      
       {{ .Content }}
       
       {{- if .Pages -}}
