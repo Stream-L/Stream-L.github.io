@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zotero文献矩阵脚本生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #F2F2F2;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .panel {
+            padding: 30px;
+        }
+
+        .config-panel {
+            border-bottom: 2px solid #F2F2F2;
+        }
+
+        .code-panel {
+            background: #FAFAFA;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #222222;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #9C9C9C;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .help-btn {
+            position: relative;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: #0069E0;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 8px;
+        }
+
+        .help-btn:hover .tooltip {
+            display: block;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 125%;
+            left: -100px;
+            width: 300px;
+            background: #333;
+            color: white;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 100px;
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+
+        .section {
+            background: #FAFAFA;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #E8E8E8;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #222222;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-secondary {
+            background: #E8E8E8;
+            color: #333333;
+        }
+
+        .btn-secondary:hover {
+            background: #D0D0D0;
+        }
+
+        .btn-primary {
+            background: #0069E0;
+            color: white;
+            min-width: 120px;
+        }
+
+        .btn-primary:hover {
+            background: #0052B3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .fields-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #E8E8E8;
+            border-radius: 4px;
+        }
+
+        .field-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .field-item label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #0069E0;
+        }
+
+        .category-title {
+            font-weight: bold;
+            color: #0069E0;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .category-fields {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .code-output {
+            background: white;
+            border: 1px solid #E8E8E8;
+            border-radius: 4px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 600px;
+            overflow-y: auto;
+            color: #333;
+        }
+
+        .copy-btn {
+            margin-top: 15px;
+        }
+
+        .download-btn {
+            margin-left: 10px;
+        }
+
+        pre {
+            margin: 0;
+        }
+
+        .tip {
+            background: #E7F3FF;
+            border-left: 4px solid #0069E0;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #004085;
+        }
+
+        .tip strong {
+            color: #0069E0;
+        }
+
+        .author-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding: 15px;
+            border-top: 1px solid #E8E8E8;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .author-name {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .separator {
+            color: #DDD;
+        }
+
+        .author-info a {
+            color: #0069E0;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .author-info a:hover {
+            color: #0052B3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 配置面板 -->
+        <div class="panel config-panel">
+            <h1>📊 Zotero文献矩阵脚本生成器
+                <span class="help-btn">?
+                    <span class="tooltip">📖 使用方式：
+1. 勾选要提取的元数据字段
+2. 点击"生成脚本"按钮
+3. 复制生成的代码或直接下载为 .js 文件
+4. 在 Zotero 中运行脚本
+   - 选择要处理的条目
+   - 工具 > Actions and Tags > Run JavaScript
+   - 加载生成的脚本文件
+
+脚本会自动：
+- 扫描PDF注释标签
+- 让用户选择要提取的标签
+- 删除旧笔记避免重复
+- 提取元数据和注释
+- 生成表格笔记
+
+注释提取功能由脚本自动处理，
+本生成器仅用于配置元数据字段。</span>
+                </span>
+            </h1>
+            <p class="subtitle">选择要提取的元数据字段，自动生成文献矩阵脚本</p>
+
+            <div class="tip">
+                <strong>💡 提示：</strong>脚本的注释提取功能已内置，本生成器只需配置元数据字段。选择的字段将作为表格的列显示在注释列之后。
+            </div>
+
+            <!-- 元数据字段选择 -->
+            <div class="section">
+                <div class="section-title">🔧 元数据字段配置</div>
+
+                <div class="btn-group">
+                    <button class="btn-secondary" onclick="selectAllFields()">全选</button>
+                    <button class="btn-secondary" onclick="deselectAllFields()">全不选</button>
+                </div>
+
+                <div id="fieldsContainer"></div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <div class="section">
+                <button class="btn-primary" onclick="generateScript()">🔄 生成脚本</button>
+            </div>
+        </div>
+
+        <!-- 代码输出面板 -->
+        <div class="panel code-panel">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                <h2 style="color: #222; margin: 0; flex: 1;">📝 生成的脚本代码</h2>
+                <button class="btn-success copy-btn" onclick="copyCode()" style="margin: 0;">📋 复制代码</button>
+                <button class="btn-success download-btn" onclick="downloadScript()" style="margin: 0; margin-left: 0;">⬇️ 下载脚本</button>
+            </div>
+            <div class="code-output" id="codeOutput">点击"生成脚本"按钮来生成文献矩阵脚本...</div>
+        </div>
+
+        <!-- 作者信息 -->
+        <div class="author-info">
+            <span class="author-name">作者: Stream-L</span>
+            <span class="separator">|</span>
+            <a href="https://stream-l.github.io/" target="_blank" rel="noopener">博客</a>
+        </div>
+    </div>
+
+    <script>
+        // 元数据字段定义（基于 all_matrix.js）
+        const METADATA_FIELDS = {
+            all: [
+                { id: 'title', name: '标题', variable: 'title' },
+                { id: 'creators', name: '作者', variable: 'creators', isSpecial: true },
+                { id: 'date', name: '日期', variable: 'date' },
+                { id: 'year', name: '年份', variable: 'year' },
+                { id: 'abstractNote', name: '摘要', variable: 'abstractNote' },
+                { id: 'itemType', name: '文献类型', variable: 'itemType', isSpecial: true },
+                { id: 'url', name: 'URL', variable: 'url' },
+                { id: 'DOI', name: 'DOI', variable: 'DOI' },
+                { id: 'ISBN', name: 'ISBN', variable: 'ISBN' },
+                { id: 'ISSN', name: 'ISSN', variable: 'ISSN' },
+                { id: 'accessDate', name: '访问日期', variable: 'accessDate' },
+                { id: 'language', name: '语言', variable: 'language' },
+                { id: 'libraryCatalog', name: '文库编目', variable: 'libraryCatalog' },
+                { id: 'pages', name: '页码', variable: 'pages' },
+                { id: 'place', name: '出版地', variable: 'place' },
+                { id: 'publisher', name: '出版社', variable: 'publisher' },
+                { id: 'publicationTitle', name: '期刊/出版物', variable: 'publicationTitle' },
+                { id: 'journalAbbreviation', name: '期刊缩写', variable: 'journalAbbreviation' },
+                { id: 'volume', name: '卷', variable: 'volume' },
+                { id: 'issue', name: '期号', variable: 'issue' },
+                { id: 'series', name: '系列', variable: 'series' },
+                { id: 'seriesNumber', name: '系列编号', variable: 'seriesNumber' },
+                { id: 'edition', name: '版本', variable: 'edition' },
+                { id: 'shortTitle', name: '短标题', variable: 'shortTitle' },
+                { id: 'titleTranslation', name: '标题翻译', variable: 'titleTranslation' },
+                { id: 'abstractTranslation', name: '摘要翻译', variable: 'abstractTranslation' },
+                { id: 'bookTitle', name: '图书标题', variable: 'bookTitle' },
+                { id: 'thesisType', name: '学位类型', variable: 'thesisType' },
+                { id: 'university', name: '大学', variable: 'university' },
+                { id: 'conferenceName', name: '会议名称', variable: 'conferenceName' },
+                { id: 'manuscriptType', name: '文档类型', variable: 'manuscriptType' },
+                { id: 'reportNumber', name: '报告编号', variable: 'reportNumber' },
+                { id: 'reportType', name: '报告类型', variable: 'reportType' },
+                { id: 'archive', name: '档案', variable: 'archive' },
+                { id: 'archiveLocation', name: '档案位置', variable: 'archiveLocation' },
+                { id: 'callNumber', name: '索书号', variable: 'callNumber' },
+                { id: 'rights', name: '权利', variable: 'rights' },
+                { id: 'extra', name: '附加信息', variable: 'extra' },
+                { id: 'tags', name: '标签', variable: 'tags', isSpecial: true },
+                { id: 'attachmentCount', name: '附件数量', variable: null, isSpecial: true },
+                { id: 'firstAttachmentName', name: '第一个附件名称', variable: null, isSpecial: true },
+                { id: 'attachmentLink', name: '附件链接', variable: null, isSpecial: true },
+                { id: 'noteCount', name: '子笔记数量', variable: null, isSpecial: true },
+                { id: 'key', name: '项目键', variable: 'key', isSpecial: true },
+                { id: 'id', name: '项目ID', variable: 'id', isSpecial: true },
+                { id: 'libraryID', name: '图书馆ID', variable: 'libraryID', isSpecial: true },
+                { id: 'dateAdded', name: '添加日期', variable: 'dateAdded' },
+                { id: 'dateModified', name: '修改日期', variable: 'dateModified' }
+            ]
+        };
+
+        // 默认选择的字段
+        const DEFAULT_SELECTED = ['title', 'creators', 'date', 'abstractNote', 'DOI', 'attachmentLink'];
+
+        // 初始化字段UI
+        function initializeFields() {
+            const container = document.getElementById('fieldsContainer');
+            container.innerHTML = '';
+
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'category-title';
+            titleDiv.textContent = '所有元数据字段 (共 ' + METADATA_FIELDS.all.length + ' 个)';
+            categoryDiv.appendChild(titleDiv);
+
+            const fieldsDiv = document.createElement('div');
+            fieldsDiv.className = 'category-fields';
+
+            METADATA_FIELDS.all.forEach(field => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'field-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `field_${field.id}`;
+                checkbox.value = field.id;
+
+                // 根据 DEFAULT_SELECTED 设置默认选中
+                if (DEFAULT_SELECTED.includes(field.id)) {
+                    checkbox.checked = true;
+                }
+
+                const label = document.createElement('label');
+                label.htmlFor = `field_${field.id}`;
+                label.textContent = field.name;
+
+                fieldDiv.appendChild(checkbox);
+                fieldDiv.appendChild(label);
+                fieldsDiv.appendChild(fieldDiv);
+            });
+
+            categoryDiv.appendChild(fieldsDiv);
+            container.appendChild(categoryDiv);
+        }
+
+        // 快选函数
+        function selectFieldsByCategory(category) {
+            // 保留向后兼容，但实际不用了
+            selectAllFields();
+        }
+
+        function selectAllFields() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+        }
+
+        function deselectAllFields() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        }
+
+        // 获取选中的字段
+        function getSelectedFields() {
+            const selected = [];
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                const field = METADATA_FIELDS.all.find(f => f.id === cb.value);
+                if (field) {
+                    selected.push(field);
+                }
+            });
+            return selected;
+        }
+
+        // 生成脚本
+        function generateScript() {
+            const selectedFields = getSelectedFields();
+            if (selectedFields.length === 0) {
+                alert('请至少选择一个元数据字段！');
+                return;
+            }
+
+            // 生成元数据字段定义
+            let fieldsCode = '// 定义所有要提取的元数据字段\n';
+            fieldsCode += 'const METADATA_FIELDS = [\n';
+
+            selectedFields.forEach((field, index) => {
+                const fieldDef = `  { name: "${field.name}", variable: "${field.variable || 'null'}"${field.isSpecial ? ', isSpecial: true' : ''} }`;
+                fieldsCode += fieldDef + (index < selectedFields.length - 1 ? ',' : '');
+                fieldsCode += '\n';
+            });
+
+            fieldsCode += '];\n\n';
+
+            // 读取基础脚本并替换元数据定义
+            const baseScript = getBaseScript();
+            const scriptCode = baseScript.replace(
+                /\/\/ 定义所有要提取的元数据字段[\s\S]*?const METADATA_FIELDS = \[[\s\S]*?\];\s*\n/,
+                fieldsCode
+            );
+
+            document.getElementById('codeOutput').textContent = scriptCode;
+        }
+
+        // 获取基础脚本模板
+        function getBaseScript() {
+            return `/**
+ * @author Mulei
+ * 脚本功能：从所有选中的条目中提取指定 PDF 附件内带有指定"注释标签"的注释（转换为 HTML），
+ * 同时提取所有元数据字段，并将结果合并到一个表格中。
+ * 
+ * 使用说明：
+ * 1. 在 Zotero 中，使用自带的 PDF 阅读器打开 PDF，并对需要的文字做高亮或注释，然后在注释的右侧面板中添加标签（tag），如"背景"、"材料"。
+ * 2. 选中一个或多个条目后运行此脚本（使用传入的 items 或 item 变量）。
+ * 3. 脚本会弹窗提示输入新笔记的标题和要提取的注释标签。
+ * 4. 脚本会先自动删除每个条目中已生成的、包含这些标签关键字的提取注释笔记（避免重复）。
+ * 5. 然后遍历每个条目，提取注释和所有元数据字段。
+ * 6. 最后生成包含注释列和元数据列的表格笔记。
+ * 
+ * 表格结构：每行是一个条目，列包括：元数据字段列 + 注释标签列
+ */
+
+if (item) return; // 仅对所有选中项执行一次
+
+const Zotero = require("Zotero");
+const window = require("window");
+const console = require("console");
+
+// 使用传入的 items 或 item 变量
+let selectedItems = [];
+if (typeof items !== "undefined" && items.length > 0) {
+  selectedItems = items;
+} else if (typeof item !== "undefined") {
+  selectedItems = [item];
+} else {
+  window.alert("请先选择要处理的文献");
+  return;
+}
+
+// 弹窗提示输入新笔记的标题
+let noteTitle = window.prompt("请输入新笔记的标题：（默认使用当前时间）");
+if (!noteTitle) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  noteTitle = \`\${year}-\${month}-\${day} \${hours}:\${minutes}:\${seconds}\`;
+}
+
+// 创建进度窗口
+let progressWindow = new Zotero.ProgressWindow({ closeOnClick: false });
+progressWindow.changeHeadline("提取注释和元数据到表格");
+progressWindow.show();
+
+let progressIcon = 'chrome://zotero/skin/spinner-16px.png';
+let itemProgress = new progressWindow.ItemProgress(progressIcon, noteTitle.substring(0, 60));
+itemProgress.setProgress(0);
+itemProgress.setText("⏳ 正在扫描注释标签...");
+progressWindow.show();
+
+/**
+ * 从所有选中的条目中提取所有注释标签
+ */
+async function getAllAnnotationTags(items) {
+  let allTags = new Set();
+  
+  for (let item of items) {
+    if (item.isAttachment()) {
+      console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+      continue;
+    }
+    
+    const attachments = item.getAttachments();
+    for (let attachmentId of attachments) {
+      const attachment = await Zotero.Items.getAsync(attachmentId);
+      if (attachment.attachmentContentType === "application/pdf") {
+        const annots = attachment.getAnnotations();
+        if (annots && annots.length > 0) {
+          for (let annot of annots) {
+            if (annot.getTags && Array.isArray(annot.getTags())) {
+              let tagsOnAnnot = annot.getTags().map(tagObj => tagObj.tag);
+              tagsOnAnnot.forEach(tag => allTags.add(tag));
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return Array.from(allTags).sort();
+}
+
+// 提取所有注释标签
+let availableTags = await getAllAnnotationTags(selectedItems);
+
+if (availableTags.length === 0) {
+  itemProgress.setError();
+  itemProgress.setText("❌ 未找到任何带标签的注释");
+  progressWindow.startCloseTimer(4000);
+  return;
+}
+
+itemProgress.setProgress(20);
+itemProgress.setText(\`✓ 找到 \${availableTags.length} 个标签\`);
+
+// 让用户多选标签
+let tagSelection = window.prompt(
+  \`找到以下注释标签：\\n\\n\${availableTags.map((tag, idx) => \`\${idx + 1}. \${tag}\`).join('\\n')}\\n\\n请输入要提取的标签序号（用逗号分隔，如：1,3,5）\\n或直接输入标签名称（用逗号分隔）\\n输入 0 可全选所有标签：\`
+);
+
+if (!tagSelection) {
+  itemProgress.setError();
+  itemProgress.setText("❌ 未选择标签");
+  progressWindow.startCloseTimer(3000);
+  return;
+}
+
+itemProgress.setProgress(25);
+itemProgress.setText("⏳ 正在解析标签选择...");
+
+// 解析用户输入
+let annotationTags = [];
+
+if (tagSelection.trim() === '0') {
+  annotationTags = [...availableTags];
+} else {
+  let inputs = tagSelection.split(/[,，;；]/).map(s => s.trim()).filter(s => s.length > 0);
+
+  for (let input of inputs) {
+    if (/^\\d+$/.test(input)) {
+      let index = parseInt(input) - 1;
+      if (index >= 0 && index < availableTags.length) {
+        annotationTags.push(availableTags[index]);
+      }
+    } else {
+      if (availableTags.includes(input)) {
+        annotationTags.push(input);
+      }
+    }
+  }
+
+  annotationTags = [...new Set(annotationTags)];
+}
+
+if (annotationTags.length === 0) {
+  itemProgress.setError();
+  itemProgress.setText("❌ 没有有效的标签选择");
+  progressWindow.startCloseTimer(3000);
+  return;
+}
+
+itemProgress.setProgress(30);
+itemProgress.setText(\`✓ 已选择 \${annotationTags.length} 个标签: \${annotationTags.join(", ")}\`);
+
+// 定义所有要提取的元数据字段
+const METADATA_FIELDS = [
+  { name: "标题", variable: "title" },
+  { name: "作者", variable: "creators", isSpecial: true }
+];
+
+console.log(\`[DEBUG] 总字段数: \${METADATA_FIELDS.length}\`);
+console.log(\`[DEBUG] 注释标签数: \${annotationTags.length}\`);
+
+/**
+ * 删除每个条目中已生成的、包含任一指定注释标签关键字的提取注释笔记
+ */
+async function deleteIndividualAnnotationNotes(items, annotationTags) {
+  itemProgress.setProgress(35);
+  itemProgress.setText("⏳ 正在删除旧笔记...");
+  
+  let deletedCount = 0;
+  for (let item of items) {
+    if (item.isAttachment()) {
+      console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+      continue;
+    }
+    
+    const noteIDs = item.getNotes();
+    console.log(\`[DEBUG] 条目 "\${item.getField("title")}" 有 \${noteIDs.length} 个笔记\`);
+    for (let id of noteIDs) {
+      let note = Zotero.Items.get(id);
+      let noteHTML = note.getNote();
+      if (noteHTML && noteHTML.startsWith('<div data-citation-items')) {
+        if (annotationTags.some(tag => noteHTML.includes(tag))) {
+          Zotero.Items.trashTx(id);
+          deletedCount++;
+          console.log(\`[DEBUG] 删除旧笔记: \${note.getNoteTitle()}\`);
+        }
+      }
+    }
+  }
+  
+  if (deletedCount > 0) {
+    itemProgress.setText(\`✓ 已删除 \${deletedCount} 个旧笔记\`);
+  }
+}
+
+/**
+ * 从单个条目中，提取其 PDF 附件中所有带有 annotationTags 中任意一个标签的注释
+ */
+async function extractAnnotationsFromItem(item) {
+  let annotationsObj = {};
+  annotationTags.forEach(tag => {
+    annotationsObj[tag] = "";
+  });
+  
+  if (item.isAttachment()) {
+    console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+    return annotationsObj;
+  }
+  
+  const attachments = item.getAttachments();
+  console.log(\`[DEBUG] 条目 "\${item.getField("title")}" 有 \${attachments.length} 个附件\`);
+  
+  let foundAnnotationsCount = 0;
+  for (let attachmentId of attachments) {
+    const attachment = await Zotero.Items.getAsync(attachmentId);
+    if (attachment.attachmentContentType === "application/pdf") {
+      const annots = attachment.getAnnotations();
+      console.log(\`[DEBUG] PDF附件有 \${annots ? annots.length : 0} 个注释\`);
+      if (annots && annots.length > 0) {
+        for (let annot of annots) {
+          if (annot.getTags && Array.isArray(annot.getTags())) {
+            let tagsOnAnnot = annot.getTags().map(tagObj => tagObj.tag);
+            for (let wantedTag of annotationTags) {
+              if (tagsOnAnnot.includes(wantedTag)) {
+                foundAnnotationsCount++;
+                try {
+                  let annotJSON = await Zotero.Annotations.toJSON(annot);
+                  let res = Zotero.EditorInstanceUtilities.serializeAnnotations([
+                    { ...annotJSON, attachmentItemID: annot.parentID }
+                  ]);
+                  let cleanHTML = res.html;
+                  if (cleanHTML.startsWith('<div') && cleanHTML.endsWith('</div>')) {
+                    cleanHTML = cleanHTML.replace(/^<div[^>]*>/, '').replace(/<\\/div>$/, '');
+                  }
+                  annotationsObj[wantedTag] += cleanHTML;
+                  console.log(\`[DEBUG] 找到标签"\${wantedTag}"的注释\`);
+                } catch (error) {
+                  console.error("转换注释为 HTML 时出错:", error);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  console.log(\`[DEBUG] 条目 "\${item.getField("title")}" 共找到 \${foundAnnotationsCount} 个匹配的注释\`);
+  return annotationsObj;
+}
+
+/**
+ * 从条目中提取单个字段的值
+ */
+function extractFieldValue(item, field) {
+  try {
+    if (field.isSpecial) {
+      switch (field.name) {
+        case "作者":
+          let creators = item.getCreators();
+          if (!creators || creators.length === 0) return "";
+          return creators.map(c => {
+            if (c.firstName && c.lastName) {
+              return \`\${c.lastName}, \${c.firstName}\`;
+            } else if (c.name) {
+              return c.name;
+            } else if (c.lastName) {
+              return c.lastName;
+            } else {
+              return "";
+            }
+          }).filter(n => n).join("; ");
+        
+        case "文献类型":
+          return Zotero.ItemTypes.getLocalizedString(item.itemTypeID) || item.itemType || "";
+        
+        case "附件数量":
+          let attachments = Zotero.Items.get(item.getAttachments());
+          return attachments ? attachments.length.toString() : "0";
+        
+        case "子笔记数量":
+          let notes = item.getNotes();
+          return notes ? notes.length.toString() : "0";
+        
+        case "项目键":
+          return item.key || "";
+        
+        case "项目ID":
+          return item.id ? item.id.toString() : "";
+        
+        case "图书馆ID":
+          return item.libraryID ? item.libraryID.toString() : "";
+        
+        case "标签":
+          let tags = item.getTags();
+          if (!tags || tags.length === 0) return "";
+          return tags.map(t => t.tag).join(", ");
+        
+        case "第一个附件名称":
+          let attList = Zotero.Items.get(item.getAttachments());
+          if (!attList || attList.length === 0) return "";
+          return attList[0].getField("title") || "";
+        
+        case "附件链接":
+          let attList2 = Zotero.Items.get(item.getAttachments());
+          if (!attList2 || attList2.length === 0) return "";
+          let firstAtt = attList2[0];
+          if (firstAtt.isFileAttachment()) {
+            return \`zotero://open-pdf/library/items/\${firstAtt.key}\`;
+          } else if (firstAtt.isLinkAttachment()) {
+            return firstAtt.getField("url") || "";
+          }
+          return "";
+        
+        default:
+          return "";
+      }
+    }
+    
+    if (!field.variable) {
+      return "";
+    }
+    
+    let value = item.getField(field.variable, false, true);
+    return value || "";
+    
+  } catch (error) {
+    console.log(\`[DEBUG] 提取字段 "\${field.name}" 失败:\`, error);
+    return "";
+  }
+}
+
+/**
+ * 从单个条目中提取所有元数据
+ */
+function extractMetadataFromItem(item) {
+  let metadata = {};
+  
+  for (let field of METADATA_FIELDS) {
+    metadata[field.name] = extractFieldValue(item, field);
+  }
+  
+  return metadata;
+}
+
+/**
+ * 主处理函数：提取所有条目的注释和元数据并生成表格
+ */
+async function combineAnnotationsAndMetadata(items) {
+  itemProgress.setProgress(40);
+  itemProgress.setText(\`⏳ 正在处理 \${items.length} 个条目...\`);
+  
+  let tableData = [];
+  let processedCount = 0;
+  
+  for (let item of items) {
+    if (item.isAttachment()) {
+      console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+      continue;
+    }
+    
+    let title = item.getField("title") || "无标题";
+    console.log(\`[DEBUG] 正在处理条目: \${title}\`);
+    
+    processedCount++;
+    let progress = 40 + Math.floor((processedCount / items.length) * 40);
+    itemProgress.setProgress(progress);
+    itemProgress.setText(\`⏳ 正在提取数据 (\${processedCount}/\${items.length}): \${title.substring(0, 30)}...\`);
+    
+    try {
+      let itemAnnotations = await extractAnnotationsFromItem(item);
+      let metadata = extractMetadataFromItem(item);
+      tableData.push({ 
+        annotations: itemAnnotations,
+        metadata: metadata
+      });
+    } catch (error) {
+      console.error(\`处理文献 "\${title}" 时出错:\`, error);
+    }
+  }
+  
+  if (tableData.length === 0) {
+    itemProgress.setError();
+    itemProgress.setText("❌ 未能提取任何数据");
+    progressWindow.startCloseTimer(4000);
+    return;
+  }
+  
+  itemProgress.setProgress(80);
+  itemProgress.setText(\`✓ 已提取 \${tableData.length} 个条目的数据\`);
+  
+  // 构建 HTML 表格
+  let combinedHTML = \`<h1>\${noteTitle}</h1>\\n\`;
+  combinedHTML += \`<p>共 \${tableData.length} 个条目，\${METADATA_FIELDS.length} 个元数据字段，\${annotationTags.length} 个注释标签</p>\\n\`;
+  combinedHTML += \`<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%;">\\n\`;
+  
+  // 表头：先是元数据字段列，后是注释标签列
+  combinedHTML += \`<tr style="background-color: #f0f0f0; font-weight: bold;">\`;
+  
+  for (let field of METADATA_FIELDS) {
+    combinedHTML += \`<th style="text-align: left; padding: 8px; white-space: nowrap;">\${field.name}</th>\`;
+  }
+  
+  annotationTags.forEach(tag => {
+    combinedHTML += \`<th style="text-align: left; padding: 8px; white-space: nowrap; background-color: #e8f4f8;">\${tag}</th>\`;
+  });
+  
+  combinedHTML += \`</tr>\\n\`;
+  
+  // 数据行
+  tableData.forEach((row, index) => {
+    let bgColor = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
+    combinedHTML += \`<tr style="background-color: \${bgColor};\">\`;
+    
+    for (let field of METADATA_FIELDS) {
+      let cellValue = row.metadata[field.name] || "";
+      cellValue = cellValue.replace(/&/g, "&amp;")
+                           .replace(/</g, "&lt;")
+                           .replace(/>/g, "&gt;")
+                           .replace(/"/g, "&quot;")
+                           .replace(/'/g, "&#39;");
+      
+      let displayValue = cellValue;
+      if (cellValue.length > 100) {
+        displayValue = cellValue.substring(0, 100) + "...";
+      }
+      
+      combinedHTML += \`<td style="padding: 8px; vertical-align: top;">\${displayValue}</td>\`;
+    }
+    
+    annotationTags.forEach(tag => {
+      let cellContent = row.annotations[tag] || "";
+      combinedHTML += \`<td style="padding: 8px; vertical-align: top;">\${cellContent}</td>\`;
+    });
+    
+    combinedHTML += \`</tr>\\n\`;
+  });
+  
+  combinedHTML += \`</table>\\n\`;
+  
+  itemProgress.setProgress(85);
+  itemProgress.setText("⏳ 正在创建笔记...");
+  
+  let currentItem = items[0];
+  let libraryID = currentItem.libraryID;
+  console.log(\`[DEBUG] 库ID: \${libraryID}\`);
+  
+  let library = Zotero.Libraries.get(libraryID);
+  console.log(\`[DEBUG] 库名称: \${library.name}, 可编辑: \${library.editable}\`);
+  if (!library.editable) {
+    itemProgress.setError();
+    itemProgress.setText("❌ 该库为只读状态，无法创建笔记");
+    progressWindow.startCloseTimer(4000);
+    return null;
+  }
+  
+  let collectionID = null;
+  try {
+    let zoteroPane = Zotero.getActiveZoteroPane();
+    if (zoteroPane) {
+      let selectedCollection = zoteroPane.getSelectedCollection(true);
+      if (selectedCollection) {
+        collectionID = selectedCollection;
+        console.log(\`[DEBUG] 当前分类ID: \${collectionID}\`);
+      }
+    }
+  } catch (e) {
+    console.log("[DEBUG] 无法获取当前分类:", e);
+  }
+  
+  itemProgress.setProgress(90);
+  itemProgress.setText("⏳ 正在保存笔记...");
+  
+  let noteItem = new Zotero.Item("note");
+  noteItem.libraryID = libraryID;
+  noteItem.parentID = null;
+  console.log(\`[DEBUG] 笔记parentID设置为null(独立笔记)\`);
+  
+  if (collectionID) {
+    noteItem.addToCollection(collectionID);
+    console.log(\`[DEBUG] 笔记已添加到分类: \${collectionID}\`);
+  }
+  
+  noteItem.setNote(combinedHTML);
+  console.log(\`[DEBUG] 笔记内容已设置,长度: \${combinedHTML.length}\`);
+  
+  await noteItem.saveTx();
+  console.log(\`[DEBUG] 笔记已保存,ID: \${noteItem.id}\`);
+  
+  itemProgress.setProgress(100);
+  itemProgress.setText(\`✅ 成功创建笔记: \${noteTitle}\`);
+  progressWindow.startCloseTimer(3000);
+  
+  return noteItem;
+}
+
+// 先删除旧的提取笔记，再合并生成新的独立笔记
+deleteIndividualAnnotationNotes(selectedItems, annotationTags).then(() => {
+  combineAnnotationsAndMetadata(selectedItems).then((noteItem) => {
+    if (!noteItem) {
+      itemProgress.setError();
+      itemProgress.setText("❌ 处理过程中未能创建笔记");
+      progressWindow.startCloseTimer(4000);
+    }
+  }).catch((error) => {
+    console.error("合并注释和元数据时出错:", error);
+    itemProgress.setError();
+    itemProgress.setText(\`❌ 错误: \${error.message}\`);
+    progressWindow.startCloseTimer(5000);
+  });
+}).catch((error) => {
+  console.error("删除旧笔记时出错:", error);
+  itemProgress.setError();
+  itemProgress.setText(\`❌ 错误: \${error.message}\`);
+  progressWindow.startCloseTimer(5000);
+});`;
+        }
+
+        // 复制代码
+        function copyCode() {
+            const codeOutput = document.getElementById('codeOutput');
+            const text = codeOutput.textContent;
+            if (text === '点击"生成脚本"按钮来生成文献矩阵脚本...') {
+                alert('请先生成脚本！');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                alert('脚本代码已复制到剪贴板！');
+            }).catch(() => {
+                alert('复制失败，请手动选择复制');
+            });
+        }
+
+        // 下载脚本
+        function downloadScript() {
+            const codeOutput = document.getElementById('codeOutput');
+            const text = codeOutput.textContent;
+            if (text === '点击"生成脚本"按钮来生成文献矩阵脚本...') {
+                alert('请先生成脚本！');
+                return;
+            }
+            
+            const blob = new Blob([text], { type: 'text/javascript;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'matrix-script.js';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', initializeFields);
+    </script>
+</body>
+</html>

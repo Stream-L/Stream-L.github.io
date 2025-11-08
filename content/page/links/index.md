@@ -1,8 +1,12 @@
 ---
 title: "链接"
 links:
-  - title: 文章模板生成器
+  - title: 笔记模板生成器
     description: 用于 Zotero 的 Better Notes 插件笔记模板生成工具
+    website: /template-generator.html
+    image: https://www.zotero.org/static/images/theme/zotero-logo.svg
+  - title: 文献矩阵脚本模板生成器
+    description: 用于 Zotero 的 Actions & Tags 插件笔记模板生成工具
     website: /template-generator.html
     image: https://www.zotero.org/static/images/theme/zotero-logo.svg
   - title: 图片拼接器
@@ -20,7 +24,6 @@ menu:
             icon: link
 comments: false
 ---
-
 这里收录了一些有用的工具和推荐的网站。
 
 ## 🔧 工具
