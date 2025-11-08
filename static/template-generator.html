@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -186,11 +187,21 @@
             gap: 6px;
             color: #333333;
         }
+        
+        .radio-item input[type="radio"]:disabled + label {
+            color: #999999;
+            cursor: not-allowed;
+        }
 
         input[type="radio"] {
             width: 16px;
             height: 16px;
             cursor: pointer;
+        }
+        
+        input[type="radio"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
         }
 
         .metadata-fields {
@@ -375,14 +386,16 @@
         }
 
         .btn-secondary {
-            background: #6D6D6D;
-            color: white;
+            background: #F5F5F5;
+            color: #333;
+            border: 1px solid #E0E0E0;
         }
 
         .btn-secondary:hover {
-            background: #555555;
+            background: #E8E8E8;
+            border-color: #CCCCCC;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(109, 109, 109, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-danger {
@@ -395,9 +408,84 @@
         }
 
         .checkbox-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 20px;
+            margin-bottom: 12px;
+            min-width: 150px;
+        }
+        
+        .metadata-fields {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .fields-section {
+            margin-bottom: 16px;
+        }
+        
+        .section-header {
             display: flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+            border: 1px solid #DEE2E6;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            user-select: none;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, #E9ECEF 0%, #DEE2E6 100%);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .section-header .arrow {
+            transition: transform 0.3s;
+            font-size: 16px;
+            color: #495057;
+            font-weight: bold;
+        }
+        
+        .section-header .arrow.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-header .title {
+            font-weight: 600;
+            color: #212529;
+            font-size: 14px;
+        }
+        
+        .section-header .count {
+            color: #6C757D;
+            font-size: 13px;
+            margin-left: auto;
+            background: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        
+        .collapsible-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s;
+        }
+        
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            margin: 0;
         }
 
         input[type="checkbox"] {
@@ -424,6 +512,8 @@
             cursor: pointer;
             padding: 2px;
         }
+        
+        .section-item {
             background: white;
             border: 1px solid #E8E8E8;
             border-radius: 6px;
@@ -624,90 +714,248 @@
 
                 <div class="form-group">
                     <label>可选元数据字段 (勾选后仅在存在时显示)</label>
-                    <div class="metadata-fields" id="metadataFields">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_title" checked>
-                            <label for="field_title">标题</label>
+                    <div style="margin-bottom: 12px;">
+                        <button type="button" class="btn-secondary" onclick="selectCommonFields()">快选：常用字段</button>
+                        <button type="button" class="btn-secondary" onclick="selectAllFields()">全选</button>
+                        <button type="button" class="btn-secondary" onclick="deselectAllFields()">全不选</button>
+                    </div>
+                    
+                    <div id="metadataFields" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- 常用字段 (不折叠) -->
+                        <div>
+                            <h4 style="color: #1B5E20; margin-bottom: 12px; font-size: 14px;">常用字段</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_title" checked>
+                                    <label for="field_title">标题</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_creators" checked>
+                                    <label for="field_creators">作者</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_date" checked>
+                                    <label for="field_date">日期</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_publicationTitle" checked>
+                                    <label for="field_publicationTitle">期刊（带标签）</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_doi" checked>
+                                    <label for="field_doi">DOI</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_attachmentLink" checked>
+                                    <label for="field_attachmentLink">附件（带链接）</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_abstract">
+                                    <label for="field_abstract">摘要</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_year">
+                                    <label for="field_year">年份</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_language">
+                                    <label for="field_language">语言</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_itemType">
+                                    <label for="field_itemType">文献类型</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_url">
+                                    <label for="field_url">URL</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_pages">
+                                    <label for="field_pages">页码</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_volume">
+                                    <label for="field_volume">卷</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_issue">
+                                    <label for="field_issue">期号</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_tags">
+                                    <label for="field_tags">标签</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_extra">
+                                    <label for="field_extra">附加信息</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_titleTranslation" onchange="toggleTitleTranslationOptions()">
+                                    <label for="field_titleTranslation">标题翻译</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_abstractTranslation" onchange="toggleAbstractTranslationOptions()">
+                                    <label for="field_abstractTranslation">摘要翻译</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_journal" checked>
-                            <label for="field_journal">期刊（带标签）</label>
+                        
+                        <!-- 其他字段 (可折叠) -->
+                        <div>
+                            <div class="section-header" onclick="toggleOtherFields()">
+                                <span id="otherFieldsToggleIcon" class="arrow">▼</span>
+                                <span class="title">其他字段</span>
+                                <span class="count">展开查看更多</span>
+                            </div>
                         </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_date" checked>
-                            <label for="field_date">日期</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_authors" checked>
-                            <label for="field_authors">作者</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_language" checked>
-                            <label for="field_language">语言</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_itemType" checked>
-                            <label for="field_itemType">文献类型</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_doi" checked>
-                            <label for="field_doi">DOI</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_url" checked>
-                            <label for="field_url">链接</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_pages" checked>
-                            <label for="field_pages">页码</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_volume" checked>
-                            <label for="field_volume">卷期</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_attachment" checked>
-                            <label for="field_attachment">附件</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="field_abstract" checked>
-                            <label for="field_abstract">摘要</label>
+                        
+                        <div id="otherFieldsContainer" style="display: none; padding: 15px; background: #F8F9FA; border: 1px solid #DEE2E6; border-radius: 6px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_isbn">
+                                    <label for="field_isbn">ISBN</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_issn">
+                                    <label for="field_issn">ISSN</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_accessDate">
+                                    <label for="field_accessDate">访问日期</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_libraryCatalog">
+                                    <label for="field_libraryCatalog">文库编目</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_shortTitle">
+                                    <label for="field_shortTitle">短标题</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_journalAbbreviation">
+                                    <label for="field_journalAbbreviation">期刊缩写</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_publisher">
+                                    <label for="field_publisher">出版社</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_place">
+                                    <label for="field_place">出版地</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_edition">
+                                    <label for="field_edition">版本</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_series">
+                                    <label for="field_series">系列</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_seriesNumber">
+                                    <label for="field_seriesNumber">系列编号</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_bookTitle">
+                                    <label for="field_bookTitle">图书标题</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_conferenceName">
+                                    <label for="field_conferenceName">会议名称</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_university">
+                                    <label for="field_university">大学</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_thesisType">
+                                    <label for="field_thesisType">学位类型</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_reportType">
+                                    <label for="field_reportType">报告类型</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_reportNumber">
+                                    <label for="field_reportNumber">报告编号</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_archive">
+                                    <label for="field_archive">档案</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_archiveLocation">
+                                    <label for="field_archiveLocation">档案位置</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_callNumber">
+                                    <label for="field_callNumber">索书号</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_rights">
+                                    <label for="field_rights">权利</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_key">
+                                    <label for="field_key">项目键</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_id">
+                                    <label for="field_id">项目ID</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_libraryID">
+                                    <label for="field_libraryID">图书馆ID</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_dateAdded">
+                                    <label for="field_dateAdded">添加日期</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_dateModified">
+                                    <label for="field_dateModified">修改日期</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_attachmentCount">
+                                    <label for="field_attachmentCount">附件数量</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_attachmentName">
+                                    <label for="field_attachmentName">附件名称</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="field_noteCount">
+                                    <label for="field_noteCount">子笔记数量</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>标题翻译 (二选一)</label>
+                    <label>标题翻译显示方式 <span style="color: #999; font-size: 12px;">(需先勾选"标题翻译"字段)</span></label>
                     <div class="radio-group">
                         <div class="radio-item">
-                            <input type="radio" id="titleOption1" name="titleTranslation" value="show" checked>
-                            <label for="titleOption1">显示翻译</label>
+                            <input type="radio" id="titleOption1" name="titleTranslation" value="show" checked disabled>
+                            <label for="titleOption1">单独显示翻译</label>
                         </div>
                         <div class="radio-item">
-                            <input type="radio" id="titleOption2" name="titleTranslation" value="replace">
+                            <input type="radio" id="titleOption2" name="titleTranslation" value="replace" disabled>
                             <label for="titleOption2">覆盖原文</label>
                         </div>
-                        <div class="radio-item">
-                            <input type="radio" id="titleOption3" name="titleTranslation" value="none">
-                            <label for="titleOption3">不显示</label>
-                        </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>摘要翻译 (二选一)</label>
+                    <label>摘要翻译显示方式 <span style="color: #999; font-size: 12px;">(需先勾选"摘要翻译"字段)</span></label>
                     <div class="radio-group">
                         <div class="radio-item">
-                            <input type="radio" id="abstractOption1" name="abstractTranslation" value="show" checked>
-                            <label for="abstractOption1">显示翻译</label>
+                            <input type="radio" id="abstractOption1" name="abstractTranslation" value="show" checked disabled>
+                            <label for="abstractOption1">单独显示翻译</label>
                         </div>
                         <div class="radio-item">
-                            <input type="radio" id="abstractOption2" name="abstractTranslation" value="replace">
+                            <input type="radio" id="abstractOption2" name="abstractTranslation" value="replace" disabled>
                             <label for="abstractOption2">覆盖原文</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="abstractOption3" name="abstractTranslation" value="none">
-                            <label for="abstractOption3">不显示</label>
                         </div>
                     </div>
                 </div>
@@ -780,6 +1028,70 @@
     </div>
 
     <script>
+        // 字段快捷选择函数
+        function selectCommonFields() {
+            // 常用字段默认选择：标题、作者、日期、期刊、DOI、附件
+            const commonFields = ['title', 'creators', 'date', 'publicationTitle', 'doi', 'attachmentLink'];
+            const allCheckboxes = document.querySelectorAll('#metadataFields input[type="checkbox"]');
+            
+            allCheckboxes.forEach(cb => {
+                const fieldName = cb.id.replace('field_', '');
+                cb.checked = commonFields.includes(fieldName);
+            });
+        }
+        
+        function selectAllFields() {
+            const allCheckboxes = document.querySelectorAll('#metadataFields input[type="checkbox"]');
+            allCheckboxes.forEach(cb => cb.checked = true);
+            // 触发翻译选项的显示
+            toggleTitleTranslationOptions();
+            toggleAbstractTranslationOptions();
+        }
+        
+        function deselectAllFields() {
+            const allCheckboxes = document.querySelectorAll('#metadataFields input[type="checkbox"]');
+            allCheckboxes.forEach(cb => cb.checked = false);
+            // 触发翻译选项的禁用
+            toggleTitleTranslationOptions();
+            toggleAbstractTranslationOptions();
+        }
+        
+        // 折叠/展开其他字段
+        function toggleOtherFields() {
+            const container = document.getElementById('otherFieldsContainer');
+            const icon = document.getElementById('otherFieldsToggleIcon');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                icon.textContent = '▼';
+                icon.classList.remove('collapsed');
+            } else {
+                container.style.display = 'none';
+                icon.textContent = '▶';
+                icon.classList.add('collapsed');
+            }
+        }
+        
+        // 启用/禁用标题翻译选项
+        function toggleTitleTranslationOptions() {
+            const checkbox = document.getElementById('field_titleTranslation');
+            const option1 = document.getElementById('titleOption1');
+            const option2 = document.getElementById('titleOption2');
+            
+            option1.disabled = !checkbox.checked;
+            option2.disabled = !checkbox.checked;
+        }
+        
+        // 启用/禁用摘要翻译选项
+        function toggleAbstractTranslationOptions() {
+            const checkbox = document.getElementById('field_abstractTranslation');
+            const option1 = document.getElementById('abstractOption1');
+            const option2 = document.getElementById('abstractOption2');
+            
+            option1.disabled = !checkbox.checked;
+            option2.disabled = !checkbox.checked;
+        }
+    
         // 颜色选择器同步
         function setupColorPicker(colorId, textId) {
             const colorInput = document.getElementById(colorId);
@@ -963,6 +1275,67 @@
         }
 
         // 生成代码
+        // 字段配置映射
+        const FIELD_CONFIG = {
+            // 通用字段
+            title: { zoteroField: 'title', labelZh: '标题', labelEn: 'Title' },
+            creators: { zoteroField: 'creators', labelZh: '作者', labelEn: 'Authors', isComplex: true },
+            date: { zoteroField: 'date', labelZh: '日期', labelEn: 'Date' },
+            year: { zoteroField: 'date', labelZh: '年份', labelEn: 'Year', transform: (val) => val?.substring(0,4) },
+            itemType: { zoteroField: 'itemType', labelZh: '文献类型', labelEn: 'Type', isComplex: true },
+            extra: { zoteroField: 'extra', labelZh: '附加信息', labelEn: 'Extra' },
+            tags: { zoteroField: 'tags', labelZh: '标签', labelEn: 'Tags', isComplex: true },
+            
+            // 常用字段
+            abstract: { zoteroField: 'abstractNote', labelZh: '摘要', labelEn: 'Abstract' },
+            publicationTitle: { zoteroField: 'publicationTitle', labelZh: '期刊/出版物', labelEn: 'Publication' },
+            language: { zoteroField: 'language', labelZh: '语言', labelEn: 'Language' },
+            url: { zoteroField: 'url', labelZh: 'URL', labelEn: 'URL' },
+            accessDate: { zoteroField: 'accessDate', labelZh: '访问日期', labelEn: 'Access Date' },
+            libraryCatalog: { zoteroField: 'libraryCatalog', labelZh: '文库编目', labelEn: 'Library Catalog' },
+            
+            // 页码和卷期
+            pages: { zoteroField: 'pages', labelZh: '页码', labelEn: 'Pages' },
+            volume: { zoteroField: 'volume', labelZh: '卷', labelEn: 'Volume' },
+            issue: { zoteroField: 'issue', labelZh: '期号', labelEn: 'Issue' },
+            
+            // 出版信息
+            publisher: { zoteroField: 'publisher', labelZh: '出版社', labelEn: 'Publisher' },
+            place: { zoteroField: 'place', labelZh: '出版地', labelEn: 'Place' },
+            edition: { zoteroField: 'edition', labelZh: '版本', labelEn: 'Edition' },
+            
+            // 标题相关
+            shortTitle: { zoteroField: 'shortTitle', labelZh: '短标题', labelEn: 'Short Title' },
+            
+            // 系列
+            series: { zoteroField: 'series', labelZh: '系列', labelEn: 'Series' },
+            seriesNumber: { zoteroField: 'seriesNumber', labelZh: '系列编号', labelEn: 'Series Number' },
+            
+            // 特定类型
+            bookTitle: { zoteroField: 'bookTitle', labelZh: '图书标题', labelEn: 'Book Title' },
+            conferenceName: { zoteroField: 'conferenceName', labelZh: '会议名称', labelEn: 'Conference' },
+            university: { zoteroField: 'university', labelZh: '大学', labelEn: 'University' },
+            thesisType: { zoteroField: 'thesisType', labelZh: '学位类型', labelEn: 'Thesis Type' },
+            reportType: { zoteroField: 'reportType', labelZh: '报告类型', labelEn: 'Report Type' },
+            reportNumber: { zoteroField: 'reportNumber', labelZh: '报告编号', labelEn: 'Report Number' },
+            
+            // 期刊相关
+            journalAbbreviation: { zoteroField: 'journalAbbreviation', labelZh: '期刊缩写', labelEn: 'Journal Abbr.' },
+            
+            // 档案
+            archive: { zoteroField: 'archive', labelZh: '档案', labelEn: 'Archive' },
+            archiveLocation: { zoteroField: 'archiveLocation', labelZh: '档案位置', labelEn: 'Archive Location' },
+            callNumber: { zoteroField: 'callNumber', labelZh: '索书号', labelEn: 'Call Number' },
+            rights: { zoteroField: 'rights', labelZh: '权利', labelEn: 'Rights' },
+            
+            // 系统字段
+            key: { zoteroField: 'key', labelZh: '项目键', labelEn: 'Key' },
+            id: { zoteroField: 'id', labelZh: '项目ID', labelEn: 'ID', isComplex: true },
+            libraryID: { zoteroField: 'libraryID', labelZh: '图书馆ID', labelEn: 'Library ID', isComplex: true },
+            dateAdded: { zoteroField: 'dateAdded', labelZh: '添加日期', labelEn: 'Date Added' },
+            dateModified: { zoteroField: 'dateModified', labelZh: '修改日期', labelEn: 'Date Modified' }
+        };
+    
         function generateCode() {
             const lang = document.getElementById('metaLang').value;
             const color1 = document.getElementById('metaColorText1').value;
@@ -971,8 +1344,13 @@
             const customTitlePrefix = document.getElementById('customTitlePrefix').value.trim();
             const appendOriginalTitle = document.getElementById('appendOriginalTitle').checked;
             
-            const titleTranslationOption = document.querySelector('input[name="titleTranslation"]:checked').value;
-            const abstractTranslationOption = document.querySelector('input[name="abstractTranslation"]:checked').value;
+            // 只有勾选了翻译字段才读取翻译选项
+            const titleTranslationChecked = document.getElementById('field_titleTranslation').checked;
+            const titleTranslationOption = titleTranslationChecked ? document.querySelector('input[name="titleTranslation"]:checked').value : 'none';
+            
+            const abstractTranslationChecked = document.getElementById('field_abstractTranslation').checked;
+            const abstractTranslationOption = abstractTranslationChecked ? document.querySelector('input[name="abstractTranslation"]:checked').value : 'none';
+            
             const dateAuthorsDisplay = document.querySelector('input[name="dateAuthorsDisplay"]:checked').value;
             
             const langText = {
@@ -1073,31 +1451,38 @@
                 useColor = useColor === color1 ? color2 : color1;
             }
 
-            // 可选字段: 期刊
-            if (document.getElementById('field_journal').checked) {
-                code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">${t.journal}</th>\n`;
-                code += `        <td style="background-color:${useColor};">\${topItem.getField('publicationTitle') || '无期刊信息'} 
-            \${{
+            // 可选字段: 期刊 (可选显示，没有则不显示)
+            if (document.getElementById('field_publicationTitle') && document.getElementById('field_publicationTitle').checked) {
+                code += `    \${{
+        try {
+            const publicationTitle = topItem.getField('publicationTitle');
+            if (publicationTitle) {
+                let tagsHtml = '';
                 try {
                     const nodes = Zotero.ZoteroStyle.api.renderCell(topItem, "publicationTags").childNodes;
                     if (nodes && nodes.length) {
-                        return Array.prototype.map.call(nodes, e => {
+                        tagsHtml = ' ' + Array.prototype.map.call(nodes, e => {
                             e.style.marginLeft = '4px';
                             e.style.marginRight = '4px';
                             return e.outerHTML;
                         }).join(' ');
                     }
-                    return ' 🈚';
-                } catch (e) {
-                    return ' 🈚';
-                }
-            }}\$</td>\n    </tr>\n`;
+                } catch (e) {}
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.journal}</th>
+                    <td style="background-color:${useColor};">\${publicationTitle}\${tagsHtml}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
                 useColor = useColor === color1 ? color2 : color1;
             }
 
             // 可选字段: 日期与作者
             const dateChecked = document.getElementById('field_date').checked;
-            const authorsChecked = document.getElementById('field_authors').checked;
+            const authorsChecked = document.getElementById('field_creators') && document.getElementById('field_creators').checked;
             
             if (dateAuthorsDisplay === 'merged' && (dateChecked || authorsChecked)) {
                 // 合并显示模式
@@ -1236,7 +1621,7 @@
                 useColor = useColor === color1 ? color2 : color1;
             }
 
-            if (document.getElementById('field_attachment').checked) {
+            if (document.getElementById('field_attachmentLink') && document.getElementById('field_attachmentLink').checked) {
                 code += `    \${(() => {
         try {
             const attachments = topItem.getAttachments();
@@ -1314,6 +1699,231 @@
                     }
                 }
             }
+            
+            // 处理其他通用字段 (titleTranslation 和 abstractTranslation 由标题/摘要字段的翻译选项处理)
+            const simpleFields = [
+                'shortTitle', 'year', 'volume', 'issue', 'publisher', 'place', 'edition',
+                'series', 'seriesNumber', 'bookTitle', 'conferenceName',
+                'university', 'thesisType', 'reportType', 'reportNumber',
+                'journalAbbreviation', 'archive', 'archiveLocation', 
+                'callNumber', 'rights', 'extra'
+            ];
+            
+            simpleFields.forEach(fieldName => {
+                const fieldId = 'field_' + fieldName;
+                const checkbox = document.getElementById(fieldId);
+                if (!checkbox || !checkbox.checked) return;
+                
+                const config = FIELD_CONFIG[fieldName];
+                if (!config) return;
+                
+                const label = lang === 'zh' ? config.labelZh : config.labelEn;
+                const zField = config.zoteroField;
+                
+                // 特殊处理翻译字段
+                if (fieldName === 'titleTranslation' || fieldName === 'abstractTranslation') {
+                    code += `    \${{
+        try {
+            const value = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "${fieldName}");
+            if (value && value.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${label}</th>
+                    <td style="background-color:${useColor}; font-style: italic;">\${value}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                } else {
+                    code += `    \${{
+        try {
+            const value = topItem.getField('${zField}');
+            if (value) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${label}</th>
+                    <td style="background-color:${useColor};">\${value}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                }
+                useColor = useColor === color1 ? color2 : color1;
+            });
+            
+            // DOI 和 ISBN ISSN 特殊处理
+            if (document.getElementById('field_doi') && document.getElementById('field_doi').checked) {
+                code += `    \${topItem.getField('DOI') ? \`
+    <tr>
+        <th style="background-color:${useColor}; text-align: left;">DOI</th>
+        <td style="background-color:${useColor};">
+            <a href="https://doi.org/\${topItem.getField('DOI')}">\${topItem.getField('DOI')}</a>
+        </td>
+    </tr>
+    \` : ''}\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+            
+            if (document.getElementById('field_isbn') && document.getElementById('field_isbn').checked) {
+                code += `    \${{
+        try {
+            const isbn = topItem.getField('ISBN');
+            if (isbn) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">ISBN</th>
+                    <td style="background-color:${useColor};">\${isbn}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+            
+            if (document.getElementById('field_issn') && document.getElementById('field_issn').checked) {
+                code += `    \${{
+        try {
+            const issn = topItem.getField('ISSN');
+            if (issn) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">ISSN</th>
+                    <td style="background-color:${useColor};">\${issn}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+            
+            // 标签
+            if (document.getElementById('field_tags') && document.getElementById('field_tags').checked) {
+                code += `    \${{
+        try {
+            const tags = topItem.getTags();
+            if (tags && tags.length > 0) {
+                const tagStr = tags.map(t => t.tag).join(', ');
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">标签</th>
+                    <td style="background-color:${useColor};">\${tagStr}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+            
+            // 系统字段
+            const systemFields = ['key', 'id', 'libraryID', 'dateAdded', 'dateModified'];
+            systemFields.forEach(fieldName => {
+                const checkbox = document.getElementById('field_' + fieldName);
+                if (!checkbox || !checkbox.checked) return;
+                
+                const config = FIELD_CONFIG[fieldName];
+                const label = lang === 'zh' ? config.labelZh : config.labelEn;
+                
+                if (fieldName === 'id' || fieldName === 'libraryID') {
+                    code += `    \${{
+        try {
+            const value = topItem.${fieldName};
+            if (value !== undefined && value !== null) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${label}</th>
+                    <td style="background-color:${useColor};">\${value}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                } else {
+                    code += `    \${{
+        try {
+            const value = topItem.getField('${config.zoteroField}');
+            if (value) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${label}</th>
+                    <td style="background-color:${useColor};">\${value}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                }
+                useColor = useColor === color1 ? color2 : color1;
+            });
+            
+            // 附件相关字段
+            const attachmentFields = [
+                { id: 'attachmentCount', label: '附件数量', code: 'topItem.getAttachments().length' },
+                { id: 'noteCount', label: '子笔记数量', code: 'topItem.getNotes().length' }
+            ];
+            
+            attachmentFields.forEach(field => {
+                const checkbox = document.getElementById('field_' + field.id);
+                if (!checkbox || !checkbox.checked) return;
+                
+                code += `    \${{
+        try {
+            const value = ${field.code};
+            if (value !== undefined) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${field.label}</th>
+                    <td style="background-color:${useColor};">\${value}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            });
+            
+            // 附件名称和链接
+            if (document.getElementById('field_attachmentName') && document.getElementById('field_attachmentName').checked) {
+                code += `    \${{
+        try {
+            const attachments = topItem.getAttachments();
+            if (attachments && attachments.length) {
+                const attachment = Zotero.Items.get(attachments[0]);
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">附件名称</th>
+                    <td style="background-color:${useColor};">\${attachment.getFilename() || '无名称'}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
+            
+            if (document.getElementById('field_attachmentLink') && document.getElementById('field_attachmentLink').checked) {
+                code += `    \${{
+        try {
+            const attachments = topItem.getAttachments();
+            if (attachments && attachments.length) {
+                const attachment = Zotero.Items.get(attachments[0]);
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">附件链接</th>
+                    <td style="background-color:${useColor};">
+                        <a href="zotero://open-pdf/0_\${attachment.key}">\${attachment.getFilename() || '打开附件'}</a>
+                    </td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
+            }
 
             code += `</table>\n\n`;
 
@@ -1325,11 +1935,11 @@
                 if (section.subsections && section.subsections.length > 0) {
                     section.subsections.forEach(sub => {
                         if (sub.title) {
-                            code += `<p><strong>${sub.title}：</strong>`;
+                            code += `<h3>${sub.title}`;
                             if (sub.prompt) {
-                                code += `<span style="color: #999; font-style: italic;">${sub.prompt}</span>`;
+                                code += `<span style="color: #999; font-style: italic; font-weight: normal; margin-left: 10px;">${sub.prompt}</span>`;
                             }
-                            code += `</p>\n`;
+                            code += `</h3>\n`;
                         }
                     });
                 } else {
