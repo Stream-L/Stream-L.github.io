@@ -30,6 +30,8 @@ isCJKLanguage: true
 
 很多 Zotero 用户想要自定义笔记模板，却被复杂的代码劝退。因此做了**Zotero 笔记模板生成器（Template Generator）**  它通过可视化界面，**无需编写一行代码**，也能快速生成适配 Better Notes 的高质量笔记模板。
 
+工具网页➡️：[https://stream-l.github.io/template-generator.html](https://stream-l.github.io/template-generator.html)
+
 下图①页面为模板生成器，②为模板生成的预览，会有一些“$"代码，导入Zotero后会被替换，③为在Zotero中生成的笔记预览，代码会被文献信息替换，期刊标签会显示在期刊名称后
 
 ![image](https://s2.loli.net/2025/11/08/vsVe6BNySRDThMx.png)
