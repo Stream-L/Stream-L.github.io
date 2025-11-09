@@ -44,7 +44,7 @@ isCJKLanguage: true
 3. 点击 ​ **“生成代码”** ，复制结果
 4. **配置脚本**：将代码粘贴到 Zotero → Actions & Tags 中保存即可
 
-    ![image](assets/image-20251109003910-2zby81k.png)
+    ![image](https://s2.loli.net/2025/11/09/AyMYpJS1FolmvBX.png)
 
 5. **使用脚本**：首先需要对希望加入文献矩阵的内容打注释标签，现在可以通过设置标注组并启用标注时自动打标签开快速操作
 
