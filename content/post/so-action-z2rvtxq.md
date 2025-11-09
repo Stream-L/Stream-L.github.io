@@ -22,7 +22,7 @@ isCJKLanguage: true
 
 
 
-# Zotero Action & Tags 文献矩阵脚本生成工具
+# Zotero Actions & Tags 文献矩阵脚本生成工具
 
 可以生成 Zotero 的 Actions&Tags插件 可用的自定义脚本，用于生成文献矩阵
 
