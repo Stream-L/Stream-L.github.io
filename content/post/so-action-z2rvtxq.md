@@ -22,9 +22,9 @@ isCJKLanguage: true
 
 
 
-# Zotero Actions & Tags 文献矩阵脚本生成工具
+# Zotero Action & Tags 文献矩阵脚本生成工具
 
-可以生成Zotero 的 Actions&Tag插件 可用的自定义脚本，用于生成文献矩阵
+可以生成 Zotero 的 Actions&Tags插件 可用的自定义脚本，用于生成文献矩阵
 
 入口： [Zotero文献矩阵脚本生成器](https://stream-l.github.io/matrix-script-generator.html)
 
