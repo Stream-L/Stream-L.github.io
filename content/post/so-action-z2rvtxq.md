@@ -22,11 +22,13 @@ isCJKLanguage: true
 
 
 
-# Zotero Actions & Tags 文献矩阵脚本生成工具
+# Zotero Action & Tags 文献矩阵脚本生成工具
 
 可以生成 Zotero 的 Actions&Tags插件 可用的自定义脚本，用于生成文献矩阵
 
-入口： [Zotero文献矩阵脚本生成器](https://stream-l.github.io/matrix-script-generator.html)
+网页入口➡️： [Zotero文献矩阵脚本生成器](https://stream-l.github.io/matrix-script-generator.html)
+
+演示视频▶️：[Zotero文献矩阵脚本配置及使用教程_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1WFCMBqEgb)
 
 ![image](https://s2.loli.net/2025/11/09/2LrFWMqguDinXYA.png)
 
