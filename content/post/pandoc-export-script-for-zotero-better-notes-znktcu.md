@@ -46,7 +46,7 @@ Pandoc导出效果（主要是字体段落啥的还可以进一步自定义）
 
 ![image](https://s2.loli.net/2025/12/02/TcXFeUCzjbwQf4O.png)
 
-## 1. 安装 Pandoc
+##  安装 Pandoc
 
 ### 使用包管理器（Windows）
 
@@ -97,7 +97,7 @@ templatePath: "C:\\Users\\<你的用户名>\\Documents\\template\\pandoc\\my_tem
 "C:\Users\STREAM\Documents\template\pandoc\templates_标题不编号 -列表第二行顶格_可设置代码块高亮样式.docx"
 ```
 
-## 2. 配置 Actions & Tags 使用脚本
+## 配置 Actions & Tags 使用脚本
 
 1. 打开 Zotero
 2. 安装 **Better Notes** 插件 和 **Actions & Tags** 插件
@@ -116,13 +116,13 @@ templatePath: "C:\\Users\\<你的用户名>\\Documents\\template\\pandoc\\my_tem
 
     会弹出提示 OK即可跳到文件所在目录
 
-## 3. 使用选项
+## 使用选项
 
 - ​`linkStyle`​: `"hyperlink"`​（生成可点击链接）或 `"text"`（仅保留文本）
 - ​`processImages`​: `true`​（处理图片）或 `false`（忽略图片）
 - ​`debug`​: `true` 打印调试信息（输出在zotero后端）
 
-## 4. 代码内容（可快速复制）
+## 代码内容（可快速复制）
 
 ```javascript
 /**
