@@ -95,7 +95,7 @@ Sub Export_Charts_UseChartName_Customizable()
 
     '======== 用户可自定义参数 ========
     ' 保留用户自定义前缀
-    Dim customPrefixToRemove As String: customPrefixToRemove = ""
+    Dim customPrefixToRemove As String: customPrefixToRemove = "结果画图 "
     Dim exportFormat As String: exportFormat = "SVG"  ' 可选：SVG / PNG / JPG
     Dim exportFolderName As String: exportFolderName = "export_charts"
     '=================================
@@ -266,4 +266,4 @@ End Function
 
 ‍
 
-‍
+![image](https://s2.loli.net/2025/12/01/dzKgZ9cpP7Yn2SW.png)
