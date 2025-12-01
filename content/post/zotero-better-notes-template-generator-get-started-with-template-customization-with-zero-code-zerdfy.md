@@ -32,6 +32,8 @@ isCJKLanguage: true
 
 工具网页➡️：[Zotero笔记模板生成器](https://stream-l.github.io/template-generator.html)
 
+演示视频▶️：[Zotero 笔记模板生成器:让模板定制零代码上手_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1fAkXBJEA7)
+
 下图①页面为模板生成器，②为模板生成的预览，会有一些“$"代码，导入Zotero后会被替换，③为在Zotero中生成的笔记预览，代码会被文献信息替换，期刊标签会显示在期刊名称后
 
 ![image](https://s2.loli.net/2025/11/08/vsVe6BNySRDThMx.png)
