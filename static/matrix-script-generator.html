@@ -434,7 +434,7 @@
         };
 
         // 默认选择的字段
-        const DEFAULT_SELECTED = ['title', 'creators', 'date', 'abstractNote', 'DOI', 'attachmentLink'];
+        const DEFAULT_SELECTED = ['title', 'creators', 'date', 'abstractNote'];
 
         // 初始化字段UI
         function initializeFields() {
@@ -572,10 +572,10 @@ if (typeof items !== "undefined" && items.length > 0) {
   return;
 }
 
-// 过滤掉附件项，只保留条目
-selectedItems = selectedItems.filter(item => !item.isAttachment());
+// 过滤掉附件和笔记，只保留有效条目
+selectedItems = selectedItems.filter(item => !item.isAttachment() && !item.isNote());
 if (selectedItems.length === 0) {
-  window.alert("所选项目中没有有效的条目（可能都是附件）");
+  window.alert("所选项目中没有有效的条目（可能都是附件或笔记）");
   return;
 }
 
@@ -615,8 +615,8 @@ async function getAllAnnotationTags(items) {
   let allTags = new Set();
   
   for (let item of items) {
-    if (item.isAttachment()) {
-      console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+    if (item.isAttachment() || item.isNote()) {
+      console.log(\`[DEBUG] 跳过附件或笔记项目: \${item.id}\`);
       continue;
     }
     
@@ -741,8 +741,8 @@ async function deleteIndividualAnnotationNotes(items, annotationTags) {
   
   let deletedCount = 0;
   for (let item of items) {
-    if (item.isAttachment()) {
-      console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+    if (item.isAttachment() || item.isNote()) {
+      console.log(\`[DEBUG] 跳过附件或笔记项目: \${item.id}\`);
       continue;
     }
     
@@ -775,8 +775,8 @@ async function extractAnnotationsFromItem(item) {
     annotationsObj[tag] = "";
   });
   
-  if (item.isAttachment()) {
-    console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+  if (item.isAttachment() || item.isNote()) {
+    console.log(\`[DEBUG] 跳过附件或笔记项目: \${item.id}\`);
     return annotationsObj;
   }
   
@@ -927,8 +927,8 @@ async function combineAnnotationsAndMetadata(items) {
   let processedCount = 0;
   
   for (let item of items) {
-    if (item.isAttachment()) {
-      console.log(\`[DEBUG] 跳过附件项目: \${item.id}\`);
+    if (item.isAttachment() || item.isNote()) {
+      console.log(\`[DEBUG] 跳过附件或笔记项目: \${item.id}\`);
       continue;
     }
     
