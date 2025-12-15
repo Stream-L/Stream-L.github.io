@@ -539,7 +539,7 @@
         function getBaseScript() {
             return `/**
  * @author Stream-L
- * @date 2025-12-07
+ * @date 2025-12-15
  * 脚本功能：从所有选中的条目中提取指定 PDF 附件内带有指定"注释标签"的注释（转换为 HTML），
  * 同时提取所有元数据字段，并将结果合并到一个表格中。
  * 
@@ -994,9 +994,6 @@ async function combineAnnotationsAndMetadata(items) {
                            .replace(/'/g, "&#39;");
       
       let displayValue = cellValue;
-      if (cellValue.length > 100) {
-        displayValue = cellValue.substring(0, 100) + "...";
-      }
       
       combinedHTML += \`<td style="padding: 8px; vertical-align: top;">\${displayValue}</td>\`;
     }
