@@ -9,6 +9,10 @@ links:
     description: 用于 Zotero 的 Actions & Tags 插件笔记模板生成工具
     website: /matrix-script-generator.html
     image: https://www.zotero.org/static/images/theme/zotero-logo.svg
+  - title: 图片重命名下载
+    description: 用Markdown整理在线图片后，可以用这个工具对下载后的图片根据md文件快速重命名
+    website: /rename_images_tool.html
+    image: https://www.svgrepo.com/show/447405/images-alt2.svg
   - title: 图片拼接器
     description: 只是用于拼接图片
     website: /image_merger.html
