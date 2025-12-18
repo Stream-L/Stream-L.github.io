@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片批量重命名工具</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #667eea;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .step {
+      background: #f8f9ff;
+      border-left: 4px solid #667eea;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    
+    .step-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    
+    .file-input-wrapper {
+      margin-top: 10px;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .file-btn {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+    }
+    
+    .file-btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .file-name {
+      display: inline-block;
+      margin-left: 10px;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .action-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: all 0.3s;
+    }
+    
+    .action-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .btn-group .action-btn {
+      margin-top: 0;
+    }
+    
+    #log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
+    
+    #log.show {
+      display: block;
+    }
+    
+    .log-success { color: #4ec9b0; }
+    .log-error { color: #f48771; }
+    .log-warning { color: #dcdcaa; }
+    .log-info { color: #9cdcfe; }
+    .log-header { color: #c586c0; font-weight: bold; }
+    
+    .progress {
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .progress.show {
+      display: block;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    .progress-text {
+      text-align: center;
+      margin-top: 10px;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    .note strong {
+      color: #d39e00;
+    }
+    
+    .summary-box {
+      background: #f0f4ff;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .summary-box.show {
+      display: block;
+    }
+    
+    .summary-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+    
+    .summary-section {
+      margin-bottom: 15px;
+    }
+    
+    .summary-section-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    
+    .summary-list {
+      background: white;
+      padding: 10px 15px;
+      border-radius: 4px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #666;
+    }
+    
+    .summary-list.empty {
+      color: #4caf50;
+      text-align: center;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📸 图片批量重命名工具</h1>
+    <p class="subtitle">根据 Markdown 文件中的小标题重命名图片</p>
+    
+    <div class="step">
+      <div class="step-title">步骤 1️⃣：选择 Markdown 文件</div>
+      <div class="file-input-wrapper">
+        <label for="mdFile" class="file-btn">📄 选择 .md 文件</label>
+        <input type="file" id="mdFile" accept=".md,text/markdown">
+        <span class="file-name" id="mdFileName">未选择文件</span>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-title">步骤 2️⃣：选择图片目录</div>
+      <div class="file-input-wrapper">
+        <label for="imgDir" class="file-btn">📁 选择图片文件夹</label>
+        <input type="file" id="imgDir" webkitdirectory directory multiple>
+        <span class="file-name" id="imgDirName">未选择文件夹</span>
+      </div>
+    </div>
+    
+    <div class="btn-group">
+      <button class="action-btn" id="checkBtn" disabled style="flex: 1;">🔍 检查文件</button>
+    </div>
+    
+    <div class="btn-group">
+      <button class="action-btn" id="renameBtn" disabled style="flex: 1;">📥 逐个下载</button>
+      <button class="action-btn" id="zipBtn" disabled style="flex: 1;">📦 下载为 ZIP</button>
+    </div>
+    
+    <div class="progress" id="progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">处理中...</div>
+    </div>
+    
+    <div id="log"></div>
+    
+    <div class="summary-box" id="summary">
+      <div class="summary-title">📊 处理报告</div>
+      
+      <div class="summary-section">
+        <div class="summary-section-title">❌ Markdown 中有，但未找到图片（共 <span id="missingCount">0</span> 个）：</div>
+        <div class="summary-list" id="missingList">无</div>
+      </div>
+      
+      <div class="summary-section">
+        <div class="summary-section-title">⚠️ 图片目录中有，但 Markdown 中未提及（共 <span id="unusedCount">0</span> 个）：</div>
+        <div class="summary-list" id="unusedList">无</div>
+      </div>
+    </div>
+    
+    <div class="note">
+      <strong>⚠️ 注意事项：</strong><br>
+      • 此工具会生成重命名后的文件，原文件不会被修改<br>
+      • 新文件命名格式：小标题_原文件名<br>
+      • 请确保浏览器已授权文件访问权限（推荐使用 Chrome/Edge）
+    </div>
+  </div>
+
+  <script>
+    let mdFile = null;
+    let imageFiles = [];
+    const log = document.getElementById('log');
+    const checkBtn = document.getElementById('checkBtn');
+    const renameBtn = document.getElementById('renameBtn');
+    const zipBtn = document.getElementById('zipBtn');
+    const progress = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const summary = document.getElementById('summary');
+    
+    // 添加日志
+    function addLog(message, type = 'info') {
+      log.classList.add('show');
+      const line = document.createElement('div');
+      line.className = `log-${type}`;
+      line.textContent = message;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    // 清空日志
+    function clearLog() {
+      log.innerHTML = '';
+    }
+    
+    // Markdown 文件选择
+    document.getElementById('mdFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        mdFile = file;
+        document.getElementById('mdFileName').textContent = file.name;
+        checkReady();
+      }
+    });
+    
+    // 图片目录选择
+    document.getElementById('imgDir').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).filter(f => 
+        /\.(jpg|jpeg|png|gif|webp)$/i.test(f.name)
+      );
+      if (files.length > 0) {
+        imageFiles = files;
+        document.getElementById('imgDirName').textContent = `${files.length} 张图片`;
+        checkReady();
+      }
+    });
+    
+    // 检查是否可以开始
+    function checkReady() {
+      const ready = !!(mdFile && imageFiles.length > 0);
+      checkBtn.disabled = !ready;
+      renameBtn.disabled = !ready;
+      zipBtn.disabled = !ready;
+    }
+    
+    // 解析 Markdown
+    function parseMarkdown(mdText) {
+      const images = [];
+      const regex = /!\[([^\]]*?)\]\(\s*(\S+?)(?:\s+"([^"]*?)")?\s*\)/g;
+      let match;
+      
+      while ((match = regex.exec(mdText)) !== null) {
+        const altText = match[1].trim();
+        const url = match[2].trim();
+        let caption = match[3] || altText;
+        
+        if (!caption || caption === '') {
+          const beforeText = mdText.substring(0, match.index);
+          const lines = beforeText.split('\n');
+          for (let i = lines.length - 1; i >= 0; i--) {
+            const line = lines[i].trim();
+            if (line) {
+              const titleMatch = line.match(/\*\*([^*]+)\*\*/);
+              if (titleMatch) {
+                caption = titleMatch[1].trim();
+              } else if (!line.startsWith('!')) {
+                caption = line.replace(/^#+\s*/, '').trim();
+              }
+              break;
+            }
+          }
+        }
+        
+        const filename = url.split('/').pop().split('?')[0];
+        images.push({ caption: caption || '', filename, url });
+      }
+      
+      return images;
+    }
+    
+    // 下载文件
+    function downloadFile(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    // 清理文件名中的非法字符
+    function sanitizeFileName(name) {
+      // 移除或替换 Windows 文件名中的非法字符: \ / : * ? " < > |
+      return name.replace(/[\\/:*?"<>|]/g, '-')
+                 .replace(/\s+/g, ' ')  // 多个空格替换为单个
+                 .trim();
+    }
+    
+    // 生成安全的文件名
+    function generateSafeFileName(caption, originalFileName) {
+      // 提取扩展名
+      const lastDotIndex = originalFileName.lastIndexOf('.');
+      const ext = lastDotIndex > 0 ? originalFileName.substring(lastDotIndex) : '';
+      const nameWithoutExt = lastDotIndex > 0 ? originalFileName.substring(0, lastDotIndex) : originalFileName;
+      
+      let finalName;
+      if (caption && caption.trim()) {
+        // 清理小标题
+        const cleanCaption = sanitizeFileName(caption);
+        // 组合：小标题_原文件名.扩展名
+        finalName = `${cleanCaption}_${nameWithoutExt}${ext}`;
+      } else {
+        finalName = originalFileName;
+      }
+      
+      // 限制总长度（Windows路径限制）
+      if (finalName.length > 200) {
+        const extLength = ext.length;
+        finalName = finalName.substring(0, 200 - extLength) + ext;
+      }
+      
+      return finalName;
+    }
+    
+    // 智能匹配文件名
+    function findMatchingFile(targetFileName, fileList) {
+      // 去掉扩展名
+      const targetBase = targetFileName.replace(/\.[^.]+$/, '');
+      
+      // 策略1: 完全匹配（去掉扩展名）
+      let matched = fileList.find(f => {
+        const fileBase = f.name.replace(/\.[^.]+$/, '');
+        return fileBase === targetBase;
+      });
+      
+      if (matched) return matched;
+      
+      // 策略2: 包含匹配（处理浏览器添加的前缀/后缀）
+      // 例如: network-asset-785894d3ly1hm16drlhupj215o1mytqx-20251218162011-ds0u60t.jpg
+      // 应该匹配: 785894d3ly1hm16drlhupj215o1mytqx.jpg
+      matched = fileList.find(f => {
+        const fileBase = f.name.replace(/\.[^.]+$/, '');
+        // 检查文件名中是否包含目标文件名
+        return fileBase.includes(targetBase);
+      });
+      
+      if (matched) return matched;
+      
+      // 策略3: 反向包含（目标文件名包含实际文件名）
+      matched = fileList.find(f => {
+        const fileBase = f.name.replace(/\.[^.]+$/, '');
+        return targetBase.includes(fileBase);
+      });
+      
+      return matched || null;
+    }
+    
+    // 显示统计报告
+    function showSummary(missingFiles, unusedFiles) {
+      summary.classList.add('show');
+      
+      // 未找到的文件
+      const missingCount = document.getElementById('missingCount');
+      const missingList = document.getElementById('missingList');
+      missingCount.textContent = missingFiles.length;
+      
+      if (missingFiles.length > 0) {
+        missingList.innerHTML = missingFiles.map(item => {
+          if (item.caption) {
+            return `• <strong>${item.caption}</strong> → ${item.filename}`;
+          } else {
+            return `• ${item.filename}`;
+          }
+        }).join('<br>');
+        missingList.classList.remove('empty');
+      } else {
+        missingList.textContent = '✅ 所有图片都找到了';
+        missingList.classList.add('empty');
+      }
+      
+      // 未使用的文件
+      const unusedCount = document.getElementById('unusedCount');
+      const unusedList = document.getElementById('unusedList');
+      unusedCount.textContent = unusedFiles.length;
+      
+      if (unusedFiles.length > 0) {
+        unusedList.innerHTML = unusedFiles.map(f => `• ${f}`).join('<br>');
+        unusedList.classList.remove('empty');
+      } else {
+        unusedList.textContent = '✅ 所有图片都在 Markdown 中';
+        unusedList.classList.add('empty');
+      }
+    }
+    
+    // 检查文件（不下载）
+    async function checkFiles() {
+      clearLog();
+      progress.classList.add('show');
+      summary.classList.remove('show');
+      checkBtn.disabled = true;
+      renameBtn.disabled = true;
+      zipBtn.disabled = true;
+      
+      addLog('========================================', 'header');
+      addLog('开始检查文件...', 'header');
+      addLog('========================================', 'header');
+      addLog('');
+      
+      try {
+        // 读取 Markdown
+        addLog(`📖 读取 Markdown 文件: ${mdFile.name}`, 'info');
+        const mdText = await mdFile.text();
+        const mdImages = parseMarkdown(mdText);
+        addLog(`✅ 找到 ${mdImages.length} 张图片信息`, 'success');
+        addLog('');
+        
+        addLog(`📁 图片目录中有 ${imageFiles.length} 张图片`, 'info');
+        addLog('');
+        
+        let foundCount = 0;
+        let skipCount = 0;
+        const missingFiles = [];
+        const processedFiles = [];
+        
+        // 检查每张图片
+        for (let i = 0; i < mdImages.length; i++) {
+          const imgInfo = mdImages[i];
+          const originalName = imgInfo.filename;
+          
+          // 更新进度
+          const percent = Math.round((i + 1) / mdImages.length * 100);
+          progressFill.style.width = `${percent}%`;
+          progressText.textContent = `检查中... ${i + 1}/${mdImages.length}`;
+          
+          // 查找匹配的文件（使用智能匹配）
+          const matchedFile = findMatchingFile(originalName, imageFiles);
+          
+          if (!matchedFile) {
+            addLog(`❌ 未找到：${originalName}`, 'error');
+            if (imgInfo.caption) {
+              addLog(`   小标题：${imgInfo.caption}`, 'warning');
+            }
+            missingFiles.push({ filename: originalName, caption: imgInfo.caption });
+            continue;
+          }
+          
+          processedFiles.push(matchedFile.name);
+          
+          // 构建新文件名（使用安全函数）
+          const newFileName = generateSafeFileName(imgInfo.caption, matchedFile.name);
+          
+          // 如果文件名相同，跳过
+          if (matchedFile.name === newFileName) {
+            addLog(`⏭️  ${matchedFile.name}（无需重命名）`, 'info');
+            skipCount++;
+          } else {
+            addLog(`✅ ${matchedFile.name}`, 'success');
+            addLog(`   → ${newFileName}`, 'info');
+            foundCount++;
+          }
+        }
+        
+        // 查找未使用的文件
+        const unusedFiles = imageFiles
+          .filter(f => !processedFiles.includes(f.name))
+          .map(f => f.name);
+        
+        addLog('');
+        addLog('========================================', 'header');
+        addLog('检查结果：', 'header');
+        addLog(`  需要重命名: ${foundCount} 个`, foundCount > 0 ? 'success' : 'info');
+        addLog(`  无需重命名: ${skipCount} 个`, 'info');
+        addLog(`  Markdown 中有但未找到: ${missingFiles.length} 个`, missingFiles.length > 0 ? 'error' : 'success');
+        addLog(`  图片目录中有但未使用: ${unusedFiles.length} 个`, unusedFiles.length > 0 ? 'warning' : 'success');
+        addLog('========================================', 'header');
+        
+        // 显示详细报告
+        showSummary(missingFiles, unusedFiles);
+        
+        if (missingFiles.length > 0) {
+          addLog('');
+          addLog('⚠️ 警告：有文件缺失，请检查后再下载', 'warning');
+        } else {
+          addLog('');
+          addLog('✅ 所有文件都已准备好，可以开始下载或打包', 'success');
+        }
+        
+        progressText.textContent = `✅ 检查完成！`;
+        
+      } catch (error) {
+        addLog('', 'error');
+        addLog(`❌ 发生错误: ${error.message}`, 'error');
+        console.error(error);
+        progressText.textContent = '❌ 检查失败';
+      } finally {
+        checkBtn.disabled = false;
+        renameBtn.disabled = false;
+        zipBtn.disabled = false;
+      }
+    }
+    
+    // 核心处理逻辑
+    async function processImages(downloadAsZip = false) {
+      clearLog();
+      progress.classList.add('show');
+      summary.classList.remove('show');
+      checkBtn.disabled = true;
+      renameBtn.disabled = true;
+      zipBtn.disabled = true;
+      
+      addLog('========================================', 'header');
+      addLog(downloadAsZip ? '开始处理（打包为 ZIP）...' : '开始处理（逐个下载）...', 'header');
+      addLog('========================================', 'header');
+      addLog('');
+      
+      try {
+        // 读取 Markdown
+        addLog(`📖 读取 Markdown 文件: ${mdFile.name}`, 'info');
+        const mdText = await mdFile.text();
+        const mdImages = parseMarkdown(mdText);
+        addLog(`✅ 找到 ${mdImages.length} 张图片信息`, 'success');
+        addLog('');
+        
+        addLog(`📁 图片目录中有 ${imageFiles.length} 张图片`, 'info');
+        addLog('');
+        
+        let successCount = 0;
+        let skipCount = 0;
+        const missingFiles = []; // MD中有但找不到的
+        const processedFiles = []; // 已处理的文件名
+        const zip = downloadAsZip ? new JSZip() : null;
+        
+        // 处理每张图片
+        for (let i = 0; i < mdImages.length; i++) {
+          const imgInfo = mdImages[i];
+          const originalName = imgInfo.filename;
+          
+          // 更新进度
+          const percent = Math.round((i + 1) / mdImages.length * 100);
+          progressFill.style.width = `${percent}%`;
+          progressText.textContent = `处理中... ${i + 1}/${mdImages.length}`;
+          
+          // 查找匹配的文件（使用智能匹配）
+          const matchedFile = findMatchingFile(originalName, imageFiles);
+          
+          if (!matchedFile) {
+            addLog(`⚠️  跳过：未找到文件 "${originalName}"`, 'warning');
+            if (imgInfo.caption) {
+              addLog(`   小标题：${imgInfo.caption}`, 'warning');
+            }
+            missingFiles.push({ filename: originalName, caption: imgInfo.caption });
+            skipCount++;
+            continue;
+          }
+          
+          processedFiles.push(matchedFile.name);
+          
+          // 构建新文件名（使用安全函数）
+          const newFileName = generateSafeFileName(imgInfo.caption, matchedFile.name);
+          
+          // 如果文件名相同，跳过
+          if (matchedFile.name === newFileName) {
+            addLog(`⏭️  跳过：${matchedFile.name}（文件名已正确）`, 'info');
+            skipCount++;
+            continue;
+          }
+          
+          addLog(`📝 ${matchedFile.name}`, 'info');
+          addLog(`   → ${newFileName}`, 'success');
+          
+          if (downloadAsZip) {
+            // 添加到 ZIP
+            const blob = await matchedFile.slice(0, matchedFile.size, matchedFile.type);
+            zip.file(newFileName, blob);
+          } else {
+            // 逐个下载
+            const blob = await matchedFile.slice(0, matchedFile.size, matchedFile.type);
+            downloadFile(blob, newFileName);
+            // 避免下载太快被浏览器阻止
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          successCount++;
+        }
+        
+        // 如果是 ZIP 模式，生成并下载
+        if (downloadAsZip && successCount > 0) {
+          addLog('');
+          addLog('📦 正在打包 ZIP 文件...', 'info');
+          const content = await zip.generateAsync({ 
+            type: 'blob',
+            compression: "DEFLATE",
+            compressionOptions: { level: 6 }
+          });
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+          downloadFile(content, `renamed_images_${timestamp}.zip`);
+          addLog('✅ ZIP 文件已生成', 'success');
+        }
+        
+        // 查找未使用的文件
+        const unusedFiles = imageFiles
+          .filter(f => !processedFiles.includes(f.name))
+          .map(f => f.name);
+        
+        addLog('');
+        addLog('========================================', 'header');
+        addLog('完成统计：', 'header');
+        addLog(`  ${downloadAsZip ? '已打包' : '已下载'}重命名文件: ${successCount} 个`, 'success');
+        addLog(`  跳过: ${skipCount} 个`, 'warning');
+        addLog(`  Markdown 中有但未找到: ${missingFiles.length} 个`, missingFiles.length > 0 ? 'error' : 'success');
+        addLog(`  图片目录中有但未使用: ${unusedFiles.length} 个`, unusedFiles.length > 0 ? 'warning' : 'success');
+        addLog('========================================', 'header');
+        
+        // 显示详细报告
+        showSummary(missingFiles, unusedFiles);
+        
+        if (downloadAsZip) {
+          addLog('');
+          addLog('💡 提示：ZIP 文件已下载到默认下载目录', 'info');
+        } else {
+          addLog('');
+          addLog('💡 提示：重命名后的文件已下载到默认下载目录', 'info');
+        }
+        
+        progressText.textContent = `✅ 完成！已处理 ${successCount} 个文件`;
+        
+      } catch (error) {
+        addLog('', 'error');
+        addLog(`❌ 发生错误: ${error.message}`, 'error');
+        console.error(error);
+        progressText.textContent = '❌ 处理失败';
+      } finally {
+        checkBtn.disabled = false;
+        renameBtn.disabled = false;
+        zipBtn.disabled = false;
+      }
+    }
+    
+    // 检查文件按钮
+    checkBtn.addEventListener('click', async () => {
+      await checkFiles();
+    });
+    
+    // 逐个下载按钮
+    renameBtn.addEventListener('click', async () => {
+      await processImages(false);
+    });
+    
+    // ZIP 下载按钮
+    zipBtn.addEventListener('click', async () => {
+      await processImages(true);
+    });
+  </script>
+</body>
+</html>
