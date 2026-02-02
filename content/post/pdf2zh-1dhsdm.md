@@ -3,28 +3,16 @@ title: Zotero PDF2ZH 插件一键配置与启动脚本使用指南
 slug: pdf2zh-1dhsdm
 url: /post/pdf2zh-1dhsdm.html
 date: '2026-02-02 22:22:33+08:00'
-lastmod: '2026-02-03 00:35:03+08:00'
-tags:
-  - PDF翻译
-  - Zotero插件
-  - 中文处理
-  - 自动配置
-  - 一键启动
-categories:
-  - 图文教程
-  - 效率工具
-keywords: PDF翻译,Zotero插件,中文处理,自动配置,一键启动
-description: >-
-  本文介绍了如何在Windows系统上使用一键脚本自动配置和启动Zotero的PDF2ZH插件。该脚本首先检查当前目录是否包含wget工具，若没有则尝试从系统环境查找，否则提示用户手动安装。接着检测是否安装了Conda或uv工具（二者选其一），若未安装则自动安装uv。之后，脚本优先从GitHub下载插件，若失败则切换至Gitee下载。最后，根据检测到的工具类型创建或激活虚拟环境，安装依赖，并启动服务。整个过程自动化程度高，便于用户快速部署和使用PDF2ZH插件进行中文翻译。
+lastmod: '2026-02-03 00:38:19+08:00'
 toc: true
 isCJKLanguage: true
 ---
 
 
 
-# pdf2zh
+# Zotero PDF2ZH 插件一键配置与启动脚本使用指南
 
-# 插件主页
+## 插件主页
 
 [GitHub - guaguastandup/zotero-pdf2zh: PDF2zh for Zotero | Zotero PDF中文翻译插件](https://github.com/guaguastandup/zotero-pdf2zh)
 
@@ -40,9 +28,9 @@ windows 直接运行一键脚本
 
 ![image](https://s2.loli.net/2026/02/03/z2PhVsaU5Cq9YZH.png)
 
-# 配置步骤
+## 配置步骤
 
-## 1.创建文本文件
+### 创建文本文件
 
 保存脚本，新建文本文件，粘贴下面的代码，或者直接保存[stream-l.github.io/pdf2zh一键运行脚本.txt](https://stream-l.github.io/pdf2zh%E4%B8%80%E9%94%AE%E8%BF%90%E8%A1%8C%E8%84%9A%E6%9C%AC.txt)
 
@@ -323,14 +311,14 @@ pause >nul
 endlocal
 ```
 
-## 2.文本改脚本
+### 文本改脚本
 
 效果如下图，粘贴好后另存为，修改后缀，编码为ANSI  
 ​![image](https://s2.loli.net/2026/02/02/LSkXCBwEyFfVejA.png)
 
 ![image](https://s2.loli.net/2026/02/02/c4jOKEbiauJShwM.png)
 
-## 3.链接到Zotero
+### 链接到Zotero
 
 如果你想把文件和zotero的东西放一块，可以直接拖到zotero中，如果你的zotero有附件管理工具，就会把脚本移动到zotero的目录里
 
@@ -344,7 +332,7 @@ endlocal
 
 ![image](https://s2.loli.net/2026/02/03/VwPIO2ouvNAQCGS.png)
 
-## 4.运行脚本
+### 运行脚本
 
 这时右键条目>打开文件目录 可以打开所在位置
 
@@ -362,7 +350,7 @@ endlocal
 
 ![image](https://s2.loli.net/2026/02/02/r8FGes725oKYuhV.png)
 
-# 最终效果
+## 最终效果
 
 ![image](https://s2.loli.net/2026/02/03/ObwKokDNfyiCzsF.png)
 
