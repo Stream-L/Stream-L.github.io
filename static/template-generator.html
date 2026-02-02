@@ -981,10 +981,19 @@
             <!-- 笔记章节 -->
             <div class="section">
                 <div class="section-title">📒 笔记章节
-                    <span class="help-btn">?
-                        <span class="tooltip">📋 从剪贴板导入章节的格式：
 
-1. 如有Style且设置了标注颜色可以使用
+                </div>
+                
+                <div class="section-list">
+
+                    <div id="noteSections"></div>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <button class="btn-add" onclick="addSection()">➕ 添加章节</button>
+                    <button class="btn-import" onclick="importFromClipboard()" style="margin-left: 10px;">📋 从剪贴板导入大标题和配色</button>
+                    <span class="help-btn" style="margin-left: 5px;">?
+                        <span class="tooltip">1. 如有Style且设置了标注颜色可以使用
 2. 打开标注颜色管理：有两种方式
    ① Shift+P > 标注
    ② Zotero > 编辑 > 设置 > Style
@@ -996,18 +1005,20 @@
    原标注名会识别为章节名称
    颜色会识别为章节标题的底色
 
-支持格式：[["标题","#颜色"]]</span>
-                    </span>
-                </div>
-                
-                <div class="section-list">
+导入格式示例：
+[["核心贡献","#FFEB3B"],["算法核心","#42A5F5"]]
 
-                    <div id="noteSections"></div>
-                </div>
-                
-                <div style="margin-top: 10px;">
-                    <button class="btn-add" onclick="addSection()">➕ 添加章节</button>
-                    <button class="btn-import" onclick="importFromClipboard()">📋 从剪贴板导入</button>
+第一个为章节标题，第二个为背景颜色</span>
+                    </span>
+                    <button class="btn-import" onclick="importFromMarkdown()" style="margin-left: 10px;">📝 从剪贴板导入Markdown格式</button>
+                    <span class="help-btn" style="margin-left: 5px;">?
+                        <span class="tooltip">Markdown格式示例：
+## 二级标题（笔记的主要方面，如研究背景）
+### 三级标题（主要方面的子方面，如理论基础）
+<提示>（填写的提示，对三级标题内容的简单描述，如<研究基于的理论基础>，需要用"<>"包裹）
+
+可以带```也可以不带</span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -1246,7 +1257,7 @@
             });
         }
 
-        // 从剪贴板导入章节
+        // 从剪贴板导入章节（JSON格式）
         async function importFromClipboard() {
             try {
                 const text = await navigator.clipboard.readText();
@@ -1271,6 +1282,88 @@
                 alert(`成功导入 ${importData.length} 个章节！`);
             } catch (error) {
                 alert(`导入失败：${error.message}\n\n请确保剪贴板内容格式为：\n[["标题1","#颜色1"],["标题2","#颜色2"]]`);
+            }
+        }
+
+        // 从剪贴板导入Markdown格式
+        async function importFromMarkdown() {
+            try {
+                let text = await navigator.clipboard.readText();
+                
+                // 移除代码块标记（如果有）
+                text = text.replace(/^```[\s\S]*?\n/, '').replace(/\n```$/, '').trim();
+                
+                // 清空现有章节
+                sections = {};
+                sectionCount = 0;
+                
+                const lines = text.split('\n');
+                let currentSection = null;
+                let currentSubsection = null;
+                let importCount = 0;
+                
+                // 默认颜色池
+                const defaultColors = ['#FFEB3B', '#42A5F5', '#66BB6A', '#FF7043', '#AB47BC', '#26C6DA', '#FFA726'];
+                let colorIndex = 0;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (!line) continue;
+                    
+                    // 匹配二级标题 ## 标题（主要章节）
+                    const h2Match = line.match(/^##\s+(.+)/);
+                    if (h2Match && !line.match(/^###/)) {  // 确保不是###
+                        const title = h2Match[1].trim();
+                        const color = defaultColors[colorIndex % defaultColors.length];
+                        colorIndex++;
+                        
+                        addSection(title, color);
+                        currentSection = sectionCount;
+                        currentSubsection = null;
+                        importCount++;
+                        continue;
+                    }
+                    
+                    // 匹配三级标题 ### 标题（子章节）
+                    const h3Match = line.match(/^###\s+(.+)/);
+                    if (h3Match && currentSection !== null) {
+                        const title = h3Match[1].trim();
+                        currentSubsection = { title: title, prompt: '' };
+                        
+                        // 检查下一行是否有提示
+                        if (i + 1 < lines.length) {
+                            const nextLine = lines[i + 1].trim();
+                            const promptMatch = nextLine.match(/^<(.+)>$/);
+                            if (promptMatch) {
+                                currentSubsection.prompt = promptMatch[1].trim();
+                                i++; // 跳过下一行
+                            }
+                        }
+                        
+                        if (!sections[currentSection].subsections) {
+                            sections[currentSection].subsections = [];
+                        }
+                        sections[currentSection].subsections.push(currentSubsection);
+                        continue;
+                    }
+                    
+                    // 匹配独立的提示行（可能二级标题和提示不连续）
+                    const promptMatch = line.match(/^<(.+)>$/);
+                    if (promptMatch && currentSubsection) {
+                        currentSubsection.prompt = promptMatch[1].trim();
+                    }
+                }
+                
+                renderSections();
+                
+                if (importCount === 0) {
+                    throw new Error('未找到有效的Markdown标题');
+                }
+                
+                alert(`成功导入 ${importCount} 个章节！`);
+            } catch (error) {
+                alert(`导入失败：${error.message}\n\n请使用如下格式：\n## 二级标题\n### 三级标题\n<提示>`);
             }
         }
 
@@ -1405,6 +1498,7 @@
             
             let code = titleCode;
             code += `<hr/>\n`;
+            code += `<!-- 📌 以下是元数据表格，由代码自动生成，内容可以参考但请勿修改 -->\n`;
             code += `<h2 style="color: #1B5E20; background-color:#F1F8E9;">💡 ${t.metaTitle}</h2>\n\n`;
             code += `<table>\n`;
             
@@ -1553,17 +1647,7 @@
                 useColor = useColor === color1 ? color2 : color1;
             }
 
-            if (document.getElementById('field_doi').checked) {
-                code += `    \${topItem.getField('DOI') ? \`
-    <tr>
-        <th style="background-color:${useColor}; text-align: left;">${t.doi}</th>
-        <td style="background-color:${useColor};">
-            <a href="https://doi.org/\${topItem.getField('DOI')}">\${topItem.getField('DOI')}</a>
-        </td>
-    </tr>
-    \` : ''}\n`;
-                useColor = useColor === color1 ? color2 : color1;
-            }
+            // DOI在后面的"其他通用字段"部分统一处理，此处不再生成
 
             if (document.getElementById('field_url').checked) {
                 code += `    \${{
@@ -1629,7 +1713,7 @@
                 const attachment = Zotero.Items.get(attachments[0]);
                 return \`
                 <tr>
-                    <th style="background-color:${useColor}; text-align: left;">${t.attachment}</th>
+                    <th style="background-color:${useColor}; text-align: left;">附件</th>
                     <td style="background-color:${useColor};">
                         <a href="zotero://open-pdf/0_\${attachment.key}">\${attachment.getFilename() || '附件'}</a>
                     </td>
@@ -1905,27 +1989,10 @@
                 useColor = useColor === color1 ? color2 : color1;
             }
             
-            if (document.getElementById('field_attachmentLink') && document.getElementById('field_attachmentLink').checked) {
-                code += `    \${{
-        try {
-            const attachments = topItem.getAttachments();
-            if (attachments && attachments.length) {
-                const attachment = Zotero.Items.get(attachments[0]);
-                return \`
-                <tr>
-                    <th style="background-color:${useColor}; text-align: left;">附件链接</th>
-                    <td style="background-color:${useColor};">
-                        <a href="zotero://open-pdf/0_\${attachment.key}">\${attachment.getFilename() || '打开附件'}</a>
-                    </td>
-                </tr>\`;
-            }
-        } catch (e) {}
-        return '';
-    }}\$\n`;
-                useColor = useColor === color1 ? color2 : color1;
-            }
+            // 附件链接已在前面的"常用字段"部分处理，此处不再重复生成
 
             code += `</table>\n\n`;
+            code += `<!-- ✍️ 以下是笔记内容部分，请根据 <> 中的提示和文献原文进行填写 -->\n\n`;
 
             // 生成章节
             Object.keys(sections).forEach(sectionId => {
@@ -1935,11 +2002,11 @@
                 if (section.subsections && section.subsections.length > 0) {
                     section.subsections.forEach(sub => {
                         if (sub.title) {
-                            code += `<h3>${sub.title}`;
+                            code += `<p><strong>${sub.title}</strong>`;
                             if (sub.prompt) {
-                                code += `<span style="color: #999; font-style: italic; font-weight: normal; margin-left: 10px;">${sub.prompt}</span>`;
+                                code += `: <span style="color: #666; "><${sub.prompt}></span>`;
                             }
-                            code += `</h3>\n`;
+                            code += `</p>\n`;
                         }
                     });
                 } else {
