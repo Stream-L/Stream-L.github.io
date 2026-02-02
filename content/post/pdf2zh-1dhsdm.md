@@ -3,7 +3,7 @@ title: Zotero PDF2ZH 插件一键配置与启动脚本使用指南
 slug: pdf2zh-1dhsdm
 url: /post/pdf2zh-1dhsdm.html
 date: '2026-02-02 22:22:33+08:00'
-lastmod: '2026-02-03 00:38:19+08:00'
+lastmod: '2026-02-03 00:45:25+08:00'
 toc: true
 isCJKLanguage: true
 ---
@@ -33,6 +33,8 @@ windows 直接运行一键脚本
 ### 创建文本文件
 
 保存脚本，新建文本文件，粘贴下面的代码，或者直接保存[stream-l.github.io/pdf2zh一键运行脚本.txt](https://stream-l.github.io/pdf2zh%E4%B8%80%E9%94%AE%E8%BF%90%E8%A1%8C%E8%84%9A%E6%9C%AC.txt)
+
+因为直接下脚本文件可能会被报病毒，所以咱先用文本格式保存
 
 ```latex
 @echo off
@@ -336,7 +338,7 @@ endlocal
 
 这时右键条目>打开文件目录 可以打开所在位置
 
-![image](assets/image-20260202230630-ghoaeqz.png)
+![image](https://s2.loli.net/2026/02/03/9KzVUECTwsjtQmi.png)
 
 然后双击运行（如果移动了脚本位置记得wget也要移过去，没有的话下载：[GNU Wget 1.21.4 for Windows](https://eternallybored.org/misc/wget/)）
 
