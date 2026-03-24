@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zotero文献矩阵脚本生成器 v5</title>
+    <title>Zotero文献矩阵脚本生成器</title>
     <style>
         * {
             margin: 0;
@@ -277,31 +277,6 @@
             color: #0069E0;
         }
 
-        .version-badge {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-
-        .changelog {
-            background: #FFF9E6;
-            border-left: 4px solid #FFC107;
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            color: #856404;
-        }
-
-        .changelog strong {
-            color: #FFC107;
-        }
-
         .author-info {
             display: flex;
             align-items: center;
@@ -340,7 +315,6 @@
         <!-- 配置面板 -->
         <div class="panel config-panel">
             <h1>📊 Zotero文献矩阵脚本生成器
-                <span class="version-badge">v5</span>
                 <span class="help-btn">?
                     <span class="tooltip">📖 使用方式：
 1. 勾选要提取的元数据字段
@@ -355,17 +329,14 @@
 - 扫描PDF注释标签
 - 让用户选择要提取的标签
 - 删除旧笔记避免重复
-- 提取元数据和注释
+- 提取元数据和注释(v2支持无注释标签时仅提取元数据)
 - 生成表格笔记
 
-v5 新增：条目链接字段支持</span>
+注释提取功能由脚本自动处理，
+本生成器仅用于配置元数据字段。</span>
                 </span>
             </h1>
             <p class="subtitle">选择要提取的元数据字段，自动生成文献矩阵脚本</p>
-
-            <div class="changelog">
-                <strong>🎉 v5 更新：</strong>在"摘要"后新增"条目链接"字段，可生成形如 zotero://select/library/items/XXX 的可点击链接，方便快速跳转到Zotero中的条目。
-            </div>
 
             <div class="tip">
                 <strong>💡 提示：</strong>脚本的注释提取功能已内置，本生成器只需配置元数据字段。选择的字段将作为表格的列显示在注释列之后。
@@ -382,6 +353,17 @@ v5 新增：条目链接字段支持</span>
 
                 <div id="fieldsContainer"></div>
             </div>
+
+              <!-- 批注显示选项 -->
+              <div class="section">
+                <div class="section-title">🧾 批注显示</div>
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" id="keepAnnotationLineBreaks">
+                    批注分行（一个段落占一行，主要影响复制到Excel中的格式）
+                  </label>
+                </div>
+              </div>
 
             <!-- 生成按钮 -->
             <div class="section">
@@ -403,8 +385,6 @@ v5 新增：条目链接字段支持</span>
         <div class="author-info">
             <span class="author-name">作者: Stream-L</span>
             <span class="separator">|</span>
-            <span>版本: v5.0</span>
-            <span class="separator">|</span>
             <a href="https://stream-l.github.io/" target="_blank" rel="noopener">博客</a>
         </div>
     </div>
@@ -418,7 +398,6 @@ v5 新增：条目链接字段支持</span>
                 { id: 'date', name: '日期', variable: 'date' },
                 { id: 'year', name: '年份', variable: 'year' },
                 { id: 'abstractNote', name: '摘要', variable: 'abstractNote' },
-                { id: 'itemLink', name: '条目链接', variable: null, isSpecial: true },
                 { id: 'itemType', name: '文献类型', variable: 'itemType', isSpecial: true },
                 { id: 'url', name: 'URL', variable: 'url' },
                 { id: 'DOI', name: 'DOI', variable: 'DOI' },
@@ -458,6 +437,7 @@ v5 新增：条目链接字段支持</span>
                 { id: 'attachmentLink', name: '附件链接', variable: null, isSpecial: true },
                 { id: 'noteCount', name: '子笔记数量', variable: null, isSpecial: true },
                 { id: 'key', name: '项目键', variable: 'key', isSpecial: true },
+                { id: 'itemLink', name: '项目链接（本地跳转）', variable: null, isSpecial: true },
                 { id: 'id', name: '项目ID', variable: 'id', isSpecial: true },
                 { id: 'libraryID', name: '图书馆ID', variable: 'libraryID', isSpecial: true },
                 { id: 'dateAdded', name: '添加日期', variable: 'dateAdded' },
@@ -545,6 +525,8 @@ v5 新增：条目链接字段支持</span>
                 return;
             }
 
+          const keepAnnotationLineBreaks = document.getElementById('keepAnnotationLineBreaks').checked;
+
             // 生成元数据字段定义
             let fieldsCode = '// 定义所有要提取的元数据字段\n';
             fieldsCode += 'const METADATA_FIELDS = [\n';
@@ -557,12 +539,20 @@ v5 新增：条目链接字段支持</span>
 
             fieldsCode += '];\n\n';
 
+            let annotationOptionCode = '// 批注是否分行配置\n';
+            annotationOptionCode += `const KEEP_ANNOTATION_LINE_BREAKS = ${keepAnnotationLineBreaks};\n\n`;
+
             // 读取基础脚本并替换元数据定义
             const baseScript = getBaseScript();
-            const scriptCode = baseScript.replace(
+            const scriptCode = baseScript
+              .replace(
                 /\/\/ 定义所有要提取的元数据字段[\s\S]*?const METADATA_FIELDS = \[[\s\S]*?\];\s*\n/,
                 fieldsCode
-            );
+              )
+              .replace(
+                /\/\/ 批注是否分行配置[\s\S]*?const KEEP_ANNOTATION_LINE_BREAKS = (true|false);\s*\n/,
+                annotationOptionCode
+              );
 
             document.getElementById('codeOutput').textContent = scriptCode;
         }
@@ -570,14 +560,11 @@ v5 新增：条目链接字段支持</span>
         // 获取基础脚本模板
         function getBaseScript() {
             return `/**
- * @author StreamL
- * @date 2025-12-17
- * @version 5.0
+ * @author Stream-L
+ * @date 2026-03-24
  * @refs https://github.com/windingwind/zotero-actions-tags/discussions/477
  * 脚本功能：从所有选中的条目中提取指定 PDF 附件内带有指定"注释标签"的注释（转换为 HTML），
  * 同时提取所有元数据字段，并将结果合并到一个表格中。
- * 
- * v5 更新：新增"条目链接"字段，生成 zotero://select/library/items/XXX 格式的可点击链接
  * 
  * 使用说明：
  * 1. 在 Zotero 中，使用自带的 PDF 阅读器打开 PDF，并对需要的文字做高亮或注释，然后在注释的右侧面板中添加标签（tag），如"背景"、"材料"。
@@ -765,6 +752,9 @@ const METADATA_FIELDS = [
   { name: "作者", variable: "creators", isSpecial: true }
 ];
 
+// 批注是否分行配置
+const KEEP_ANNOTATION_LINE_BREAKS = false;
+
 console.log(\`[DEBUG] 总字段数: \${METADATA_FIELDS.length}\`);
 console.log(\`[DEBUG] 注释标签数: \${annotationTags.length}\`);
 
@@ -841,6 +831,14 @@ async function extractAnnotationsFromItem(item) {
                   if (cleanHTML.startsWith('<div') && cleanHTML.endsWith('</div>')) {
                     cleanHTML = cleanHTML.replace(/^<div[^>]*>/, '').replace(/<\\/div>$/, '');
                   }
+                  if (!KEEP_ANNOTATION_LINE_BREAKS) {
+                    cleanHTML = cleanHTML
+                      .replace(/<br\\s*\\/?>/gi, ' ')
+                      .replace(/<\\/p>\\s*<p[^>]*>/gi, ' ')
+                      .replace(/<\\/?p[^>]*>/gi, ' ')
+                      .replace(/\\s+/g, ' ')
+                      .trim();
+                  }
                   annotationsObj[wantedTag] += cleanHTML;
                   console.log(\`[DEBUG] 找到标签"\${wantedTag}"的注释\`);
                 } catch (error) {
@@ -893,6 +891,14 @@ function extractFieldValue(item, field) {
         
         case "项目键":
           return item.key || "";
+
+        case "项目链接（本地跳转）":
+          let key = item.key || "";
+          if (key) {
+            let itemLink = "zotero://select/library/items/" + key;
+            return "<a href='" + itemLink + "'>" + itemLink + "</a>";
+          }
+          return "";
         
         case "项目ID":
           return item.id ? item.id.toString() : "";
@@ -920,10 +926,6 @@ function extractFieldValue(item, field) {
             return firstAtt.getField("url") || "";
           }
           return "";
-        
-        case "条目链接":
-          // v5新增：生成 zotero://select/library/items/XXX 格式的链接
-          return \`zotero://select/library/items/\${item.key}\`;
         
         default:
           return "";
@@ -985,8 +987,7 @@ async function combineAnnotationsAndMetadata(items) {
       let metadata = extractMetadataFromItem(item);
       tableData.push({ 
         annotations: itemAnnotations,
-        metadata: metadata,
-        item: item  // v5: 保存条目引用，用于生成链接
+        metadata: metadata
       });
     } catch (error) {
       console.error(\`处理文献 "\${title}" 时出错:\`, error);
@@ -1028,20 +1029,17 @@ async function combineAnnotationsAndMetadata(items) {
     
     for (let field of METADATA_FIELDS) {
       let cellValue = row.metadata[field.name] || "";
-      
-      // v5: 特殊处理条目链接字段
-      if (field.name === "条目链接" && cellValue) {
-        let itemTitle = row.item.getField("title") || "打开条目";
-        combinedHTML += \`<td style="padding: 8px; vertical-align: top;"><a href="\${cellValue}">\${itemTitle}</a></td>\`;
-      } else {
-        // 普通字段：转义HTML特殊字符
+      if (field.name !== "项目链接（本地跳转）") {
         cellValue = cellValue.replace(/&/g, "&amp;")
                              .replace(/</g, "&lt;")
                              .replace(/>/g, "&gt;")
                              .replace(/"/g, "&quot;")
                              .replace(/'/g, "&#39;");
-        combinedHTML += \`<td style="padding: 8px; vertical-align: top;">\${cellValue}</td>\`;
       }
+      
+      let displayValue = cellValue;
+      
+      combinedHTML += \`<td style="padding: 8px; vertical-align: top;">\${displayValue}</td>\`;
     }
     
     annotationTags.forEach(tag => {
@@ -1160,7 +1158,7 @@ deleteIndividualAnnotationNotes(selectedItems, annotationTags).then(() => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'matrix-script-v5.js';
+            link.download = 'matrix-script.js';
             link.click();
             URL.revokeObjectURL(url);
         }
