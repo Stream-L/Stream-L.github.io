@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词语解释 PPT 生成工具 v2.1</title>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .canvas-container { background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 20px 20px; }
+        .slide-preview { aspect-ratio: 16 / 9; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .config-card { transition: all 0.2s; border-left: 4px solid transparent; }
+        .config-card.active { border-left-color: #4f46e5; background-color: #f8fafc; }
+        .config-card.disabled { opacity: 0.6; grayscale: 1; background-color: #f1f5f9; border-left-color: #cbd5e1; }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen flex flex-col overflow-hidden text-slate-800 font-sans">
+
+    <!-- Header -->
+    <header class="bg-white border-b px-6 py-3 flex justify-between items-center shrink-0 shadow-sm z-10">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">P</div>
+            <h1 class="text-lg font-bold">PPT Generator <span class="text-xs font-normal text-slate-400 ml-1">v2.1</span></h1>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="saveProfile()" class="px-3 py-1.5 text-xs border border-slate-300 rounded hover:bg-slate-50 transition">保存配置 (JSON)</button>
+            <button onclick="loadProfile()" class="px-3 py-1.5 text-xs border border-slate-300 rounded hover:bg-slate-50 transition">导入配置</button>
+            <button onclick="exportPPT()" class="px-5 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium shadow-sm transition">导出 PPTX</button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Left: Config Panel -->
+        <aside class="w-80 border-r bg-white overflow-y-auto p-4 flex flex-col gap-6 shadow-inner">
+            <section>
+                <h3 class="font-bold mb-4 text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-indigo-500 rounded-full"></span> 全局设置
+                </h3>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="col-span-2 flex justify-between items-center bg-slate-50 p-2 rounded">
+                        <label>背景色</label>
+                        <input type="color" id="globalBg" value="#ffffff" oninput="render()" class="w-12 h-6 rounded cursor-pointer border-0">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-slate-500">对齐</label>
+                        <select id="globalAlign" onchange="render()" class="w-full border p-1.5 rounded bg-white">
+                            <option value="left">左对齐</option>
+                            <option value="center" selected>居中</option>
+                            <option value="right">右对齐</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-slate-500">起始 Y (%)</label>
+                        <input type="number" id="startY" value="20" oninput="render()" class="w-full border p-1.5 rounded">
+                    </div>
+                    <div class="col-span-2 space-y-1">
+                        <label class="text-slate-500 text-[10px] uppercase">左右边距 (%)</label>
+                        <input type="range" id="marginLR" min="0" max="40" value="10" oninput="render()" class="w-full accent-indigo-600">
+                    </div>
+                </div>
+            </section>
+
+            <section id="columnConfigs">
+                <h3 class="font-bold mb-4 text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-indigo-500 rounded-full"></span> 列配置
+                </h3>
+                <div id="colList" class="space-y-3">
+                    <!-- Column items injected here -->
+                </div>
+            </section>
+        </aside>
+
+        <!-- Middle: Input Area -->
+        <section class="w-80 border-r flex flex-col bg-white">
+            <div class="p-3 bg-slate-50 border-b flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-500 tracking-tight">EXCEL 粘贴区域</span>
+                <span id="rowCount" class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full text-[10px] font-bold">0 SLIDES</span>
+            </div>
+            <textarea id="rawInput" 
+                class="flex-1 p-4 font-mono text-sm outline-none resize-none leading-relaxed text-slate-600 bg-slate-50/30 focus:bg-white transition-colors" 
+                placeholder="在此粘贴 Excel 表格数据...&#10;每行自动转为一张 PPT"
+                oninput="handleInput()"></textarea>
+        </section>
+
+        <!-- Right: Preview Area -->
+        <section class="flex-1 canvas-container p-12 flex flex-col items-center overflow-y-auto">
+            <div class="w-full max-w-3xl" id="previewArea">
+                <!-- Slides injected here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let slideData = [];
+        let colConfigs = [];
+
+        function initColConfigs(num) {
+            // 如果列数增加，保留旧配置，补充新配置
+            const oldConfigs = [...colConfigs];
+            colConfigs = Array.from({ length: num }, (_, i) => {
+                if (oldConfigs[i]) return oldConfigs[i];
+                return {
+                    visible: true,
+                    role: i === 0 ? 'title' : 'body',
+                    fontSize: i === 0 ? 48 : 24,
+                    color: '#1e293b',
+                    bold: i === 0,
+                    italic: false,
+                    marginTop: i === 0 ? 0 : 4
+                };
+            });
+            renderConfigs();
+        }
+
+        function renderConfigs() {
+            const container = document.getElementById('colList');
+            container.innerHTML = colConfigs.map((cfg, i) => `
+                <div class="config-card p-3 rounded-lg border text-[11px] ${cfg.visible ? 'active' : 'disabled shadow-inner'}">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-slate-700">Column ${i + 1}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] uppercase font-bold text-slate-400">${cfg.visible ? '显示中' : '自动存入备注'}</span>
+                            <input type="checkbox" ${cfg.visible ? 'checked' : ''} onchange="updateCfg(${i}, 'visible', this.checked)" class="w-4 h-4 accent-indigo-600">
+                        </div>
+                    </div>
+                    ${cfg.visible ? `
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <select onchange="updateCfg(${i}, 'role', this.value)" class="border p-1 rounded bg-white">
+                            <option value="title" ${cfg.role === 'title' ? 'selected' : ''}>标题角色</option>
+                            <option value="body" ${cfg.role === 'body' ? 'selected' : ''}>正文角色</option>
+                        </select>
+                        <div class="flex items-center gap-1 border rounded px-1 bg-white">
+                             <span class="text-slate-400">Size</span>
+                             <input type="number" value="${cfg.fontSize}" oninput="updateCfg(${i}, 'fontSize', this.value)" class="w-full p-0.5 outline-none">
+                        </div>
+                        <input type="color" value="${cfg.color}" oninput="updateCfg(${i}, 'color', this.value)" class="w-full h-7 rounded border p-0.5 cursor-pointer bg-white">
+                        <div class="flex gap-1">
+                            <button onclick="updateCfg(${i}, 'bold', ${!cfg.bold})" class="border flex-1 rounded hover:bg-white ${cfg.bold ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-400'}">B</button>
+                            <button onclick="updateCfg(${i}, 'italic', ${!cfg.italic})" class="border flex-1 rounded hover:bg-white ${cfg.italic ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-400'}">I</button>
+                        </div>
+                        <div class="col-span-2 pt-1 border-t mt-1">
+                            <div class="flex justify-between mb-1 text-[9px] text-slate-400 uppercase font-bold">
+                                <span>与前行间距</span>
+                                <span>${cfg.marginTop}%</span>
+                            </div>
+                            <input type="range" min="0" max="20" value="${cfg.marginTop}" oninput="updateCfg(${i}, 'marginTop', this.value)" class="w-full accent-slate-400" ${i===0?'disabled':''}>
+                        </div>
+                    </div>
+                    ` : '<div class="italic text-slate-400 py-1 font-mono">Hidden column data will be added to PPT Notes.</div>'}
+                </div>
+            `).join('');
+        }
+
+        function updateCfg(idx, key, val) {
+            colConfigs[idx][key] = (key === 'fontSize' || key === 'marginTop') ? parseInt(val) : val;
+            if (key === 'visible') renderConfigs();
+            render();
+        }
+
+        function handleInput() {
+            const text = document.getElementById('rawInput').value.trim();
+            if (!text) {
+                slideData = [];
+                document.getElementById('rowCount').innerText = `0 SLIDES`;
+                render();
+                return;
+            }
+
+            const rows = text.split('\n').map(row => row.split('\t'));
+            const maxCols = Math.max(...rows.map(r => r.length));
+            
+            if (maxCols !== colConfigs.length) {
+                initColConfigs(maxCols);
+            }
+            
+            slideData = rows;
+            document.getElementById('rowCount').innerText = `${rows.length} SLIDES`;
+            render();
+        }
+
+        function render() {
+            const previewArea = document.getElementById('previewArea');
+            const bgColor = document.getElementById('globalBg').value;
+            const align = document.getElementById('globalAlign').value;
+            const marginLR = document.getElementById('marginLR').value;
+            const startY = parseInt(document.getElementById('startY').value);
+
+            if (slideData.length === 0) {
+                previewArea.innerHTML = `<div class="text-slate-300 text-center py-20 border-2 border-dashed rounded-xl">等待输入数据...</div>`;
+                return;
+            }
+
+            previewArea.innerHTML = slideData.map((row, sIdx) => {
+                let htmlContent = row.map((cell, cIdx) => {
+                    const cfg = colConfigs[cIdx];
+                    if (!cfg || !cfg.visible) return ''; // 预览时不显示隐藏列
+                    
+                    const mt = cIdx === 0 ? 0 : cfg.marginTop;
+                    const style = `
+                        font-size: ${cfg.fontSize * 0.75}px; 
+                        color: ${cfg.color}; 
+                        font-weight: ${cfg.bold ? 'bold' : 'normal'};
+                        font-style: ${cfg.italic ? 'italic' : 'normal'};
+                        margin-top: ${mt}%;
+                        text-align: ${align};
+                        padding: 0 ${marginLR}%;
+                        line-height: 1.2;
+                    `;
+                    return `<div style="${style}">${cell}</div>`;
+                }).join('');
+
+                return `
+                    <div class="slide-preview shadow-lg rounded-sm" style="background-color: ${bgColor}">
+                        <div class="absolute inset-0 flex flex-col" style="top: ${startY}%">
+                            ${htmlContent}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function exportPPT() {
+            const pptx = new PptxGenJS();
+            pptx.layout = 'LAYOUT_16x9';
+
+            const bgColor = document.getElementById('globalBg').value.replace('#', '');
+            const align = document.getElementById('globalAlign').value;
+            const marginLR = parseInt(document.getElementById('marginLR').value);
+            const startY = parseInt(document.getElementById('startY').value);
+
+            slideData.forEach(row => {
+                let slide = pptx.addSlide();
+                slide.background = { fill: bgColor };
+                
+                let currentY = startY / 100;
+                let notesContent = [];
+
+                row.forEach((cell, cIdx) => {
+                    const cfg = colConfigs[cIdx];
+                    if (!cfg) return;
+
+                    // 核心逻辑：如果不显示，则存入备注
+                    if (!cfg.visible) {
+                        notesContent.push(`[列${cIdx+1}] ${cell}`);
+                        return;
+                    }
+
+                    const mt = (cIdx === 0 ? 0 : cfg.marginTop) / 100;
+                    currentY += mt;
+
+                    // 计算文本框高度（估算）
+                    const h = (cfg.fontSize * 1.3) / 72; 
+
+                    slide.addText(cell, {
+                        x: (marginLR / 100) * 10, 
+                        y: currentY * 5.625,      
+                        w: ((100 - marginLR * 2) / 100) * 10,
+                        fontSize: cfg.fontSize,
+                        color: cfg.color.replace('#', ''),
+                        bold: cfg.bold,
+                        italic: cfg.italic,
+                        align: align,
+                        valign: 'top'
+                    });
+
+                    currentY += h / 5.625;
+                });
+
+                if (notesContent.length > 0) {
+                    slide.addNotes(notesContent.join('\n'));
+                }
+            });
+
+            pptx.writeFile({ fileName: `Generated_PPT_${new Date().getTime()}.pptx` });
+        }
+
+        // 保存/导入风格 (JSON)
+        function saveProfile() {
+            const config = {
+                global: {
+                    bg: document.getElementById('globalBg').value,
+                    align: document.getElementById('globalAlign').value,
+                    marginLR: document.getElementById('marginLR').value,
+                    startY: document.getElementById('startY').value
+                },
+                columns: colConfigs
+            };
+            const blob = new Blob([JSON.stringify(config, null, 2)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "style-config.json";
+            a.click();
+        }
+
+        function loadProfile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const cfg = JSON.parse(ev.target.result);
+                    document.getElementById('globalBg').value = cfg.global.bg;
+                    document.getElementById('globalAlign').value = cfg.global.align;
+                    document.getElementById('marginLR').value = cfg.global.marginLR;
+                    document.getElementById('startY').value = cfg.global.startY;
+                    colConfigs = cfg.columns;
+                    renderConfigs();
+                    render();
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+    </script>
+</body>
+</html>
