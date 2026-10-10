@@ -1399,6 +1399,8 @@
             
             // 标题相关
             shortTitle: { zoteroField: 'shortTitle', labelZh: '短标题', labelEn: 'Short Title' },
+            titleTranslation: { zoteroField: null, labelZh: '标题翻译', labelEn: 'Title Translation', isExtraField: true },
+            abstractTranslation: { zoteroField: null, labelZh: '摘要翻译', labelEn: 'Abstract Translation', isExtraField: true },
             
             // 系列
             series: { zoteroField: 'series', labelZh: '系列', labelEn: 'Series' },
@@ -1496,7 +1498,14 @@
                 titleCode = `<h1 style="text-align: center">\${topItem.getField('title') || '无标题'}</h1>\n`;
             }
             
-            let code = titleCode;
+            const generatedAt = new Date().toISOString().slice(0, 10);
+            let code = `<!--
+ * @author Stream-L
+ * @date ${generatedAt}
+ * @description 生成可直接导入 Zotero Better Notes 的文献笔记模板，生成器：https://stream-l.github.io/template-generator.html
+ * @usage 在 Better Notes 模板编辑器中导入本模板分享代码。
+ -->\n`;
+            code += titleCode;
             code += `<hr/>\n`;
             code += `<!-- 📌 以下是元数据表格，由代码自动生成，内容可以参考但请勿修改 -->\n`;
             code += `<h2 style="color: #1B5E20; background-color:#F1F8E9;">💡 ${t.metaTitle}</h2>\n\n`;
@@ -1513,7 +1522,19 @@
                     code += `    <tr>\n        <th style="background-color:${useColor}; text-align: left;">${t.title}</th>\n`;
                     code += `        <td style="background-color:${useColor};">\${{
             try {
-                const titleTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "titleTranslation");
+                const titleTranslation = (() => {
+                    try {
+                        const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                        const value = api?.getExtraField?.(topItem, "titleTranslation");
+                        if (value) return value;
+                    } catch (e) {}
+                    try {
+                        const extra = topItem.getField('extra') || '';
+                        const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith('titleTranslation:'));
+                        return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                    } catch (e) {}
+                    return '';
+                })();
                 return titleTranslation && titleTranslation.trim() ? titleTranslation : topItem.getField('title');
             } catch (e) {
                 return topItem.getField('title');
@@ -1527,7 +1548,19 @@
                     if (showTitleTranslation) {
                         code += `    \${{
         try {
-            const titleTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "titleTranslation");
+            const titleTranslation = (() => {
+                try {
+                    const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                    const value = api?.getExtraField?.(topItem, "titleTranslation");
+                    if (value) return value;
+                } catch (e) {}
+                try {
+                    const extra = topItem.getField('extra') || '';
+                    const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith('titleTranslation:'));
+                    return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                } catch (e) {}
+                return '';
+            })();
             if (titleTranslation && titleTranslation.trim()) {
                 return \`
                 <tr>
@@ -1542,6 +1575,36 @@
                     }
                 }
             } else {
+                useColor = useColor === color1 ? color2 : color1;
+            }
+
+            // 翻译字段可以独立于原文字段显示
+            if (document.getElementById('field_titleTranslation').checked && !document.getElementById('field_title').checked) {
+                code += `    \${{
+        try {
+            const titleTranslation = (() => {
+                try {
+                    const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                    const value = api?.getExtraField?.(topItem, "titleTranslation");
+                    if (value) return value;
+                } catch (e) {}
+                try {
+                    const extra = topItem.getField('extra') || '';
+                    const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith('titleTranslation:'));
+                    return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                } catch (e) {}
+                return '';
+            })();
+            if (titleTranslation && titleTranslation.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left;">${t.titleTranslation}</th>
+                    <td style="background-color:${useColor}; font-style: italic;">\${titleTranslation}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
                 useColor = useColor === color1 ? color2 : color1;
             }
 
@@ -1736,8 +1799,20 @@
                 if (replaceAbstractWithTranslation) {
                     code += `    \${{
         try {
-            const abstractTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "abstractTranslation");
-            const abstract = topItem.getField('abstractNote');
+            const abstractTranslation = (() => {
+                try {
+                    const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                    const value = api?.getExtraField?.(topItem, "abstractTranslation");
+                    if (value) return value;
+                } catch (e) {}
+                try {
+                    const extra = topItem.getField('extra') || '';
+                    const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith('abstractTranslation:'));
+                    return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                } catch (e) {}
+                return '';
+            })();
+            const abstract = topItem.getField('abstractNote') || topItem.getField('abstract') || '';
             const content = abstractTranslation && abstractTranslation.trim() ? abstractTranslation : abstract;
             if (content && content.trim()) {
                 return \`
@@ -1752,7 +1827,7 @@
                 } else {
                     code += `    \${{
         try {
-            const abstract = topItem.getField('abstractNote');
+            const abstract = topItem.getField('abstractNote') || topItem.getField('abstract') || '';
             if (abstract && abstract.trim()) {
                 return \`
                 <tr>
@@ -1768,7 +1843,19 @@
                     if (showAbstractTranslation) {
                         code += `    \${{
         try {
-            const abstractTranslation = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "abstractTranslation");
+            const abstractTranslation = (() => {
+                try {
+                    const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                    const value = api?.getExtraField?.(topItem, "abstractTranslation");
+                    if (value) return value;
+                } catch (e) {}
+                try {
+                    const extra = topItem.getField('extra') || '';
+                    const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith('abstractTranslation:'));
+                    return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                } catch (e) {}
+                return '';
+            })();
             if (abstractTranslation && abstractTranslation.trim()) {
                 return \`
                 <tr>
@@ -1782,6 +1869,36 @@
                         useColor = useColor === color1 ? color2 : color1;
                     }
                 }
+            }
+
+            // 摘要翻译可以在未勾选原摘要时独立显示
+            if (document.getElementById('field_abstractTranslation').checked && !document.getElementById('field_abstract').checked) {
+                code += `    \${{
+        try {
+            const abstractTranslation = (() => {
+                try {
+                    const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                    const value = api?.getExtraField?.(topItem, "abstractTranslation");
+                    if (value) return value;
+                } catch (e) {}
+                try {
+                    const extra = topItem.getField('extra') || '';
+                    const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith('abstractTranslation:'));
+                    return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                } catch (e) {}
+                return '';
+            })();
+            if (abstractTranslation && abstractTranslation.trim()) {
+                return \`
+                <tr>
+                    <th style="background-color:${useColor}; text-align: left; vertical-align: top;">${t.abstractTranslation}</th>
+                    <td style="background-color:${useColor}; text-align: justify; line-height: 1.6; font-style: italic;">\${abstractTranslation}</td>
+                </tr>\`;
+            }
+        } catch (e) {}
+        return '';
+    }}\$\n`;
+                useColor = useColor === color1 ? color2 : color1;
             }
             
             // 处理其他通用字段 (titleTranslation 和 abstractTranslation 由标题/摘要字段的翻译选项处理)
@@ -1808,7 +1925,19 @@
                 if (fieldName === 'titleTranslation' || fieldName === 'abstractTranslation') {
                     code += `    \${{
         try {
-            const value = Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField?.getExtraField(topItem, "${fieldName}");
+            const value = (() => {
+                try {
+                    const api = typeof Zotero !== 'undefined' ? Zotero.PDFTranslate?.data?.ztoolkit?.ExtraField : null;
+                    const extraValue = api?.getExtraField?.(topItem, "${fieldName}");
+                    if (extraValue) return extraValue;
+                } catch (e) {}
+                try {
+                    const extra = topItem.getField('extra') || '';
+                    const line = extra.split(String.fromCharCode(10)).find(v => v.trim().startsWith("${fieldName}:"));
+                    return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+                } catch (e) {}
+                return '';
+            })();
             if (value && value.trim()) {
                 return \`
                 <tr>
@@ -2115,7 +2244,7 @@
             // 生成头信息
             const header = `# Instruction:
             # Open Better Notes template editor, click Options->Import Note Template: Template Sharing Code in Clipboard.
-            # Generated by Zotero Template Generator V2 https://stream-l.github.io/template-generator.html
+            # Generated by Zotero Note Template Generator V5 https://stream-l.github.io/template-generator.html
 name: "[item] ${templateName}"
 savedAt: "${savedAt}"
 content: |-`;
