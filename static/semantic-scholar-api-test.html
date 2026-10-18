@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Semantic Scholar API 测试</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; background: #f4f6f8; color: #17212b; }
+    main { width: min(760px, calc(100% - 32px)); margin: 48px auto; }
+    h1 { margin: 0 0 8px; font-size: 26px; }
+    .subtitle { margin: 0 0 24px; color: #5d6a75; }
+    section { background: #fff; border: 1px solid #dfe5ea; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+    label { display: block; margin: 0 0 7px; font-weight: 650; }
+    input { box-sizing: border-box; width: 100%; padding: 11px 12px; border: 1px solid #bcc7d0; border-radius: 6px; font: inherit; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    button { border: 0; border-radius: 6px; padding: 10px 14px; font: inherit; font-weight: 650; cursor: pointer; }
+    .primary { background: #1769aa; color: white; }
+    .secondary { background: #e9eef2; color: #1f2d38; }
+    button:disabled { cursor: wait; opacity: .6; }
+    #status { margin-top: 14px; padding: 11px 12px; border-radius: 6px; background: #eef2f5; color: #44515b; white-space: pre-wrap; }
+    #status.ok { background: #e7f5ec; color: #166534; }
+    #status.error { background: #fff0f0; color: #a12626; }
+    pre { margin: 0; max-height: 360px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    .hint { color: #65727d; font-size: 13px; line-height: 1.55; }
+    a { color: #1769aa; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Semantic Scholar API 测试</h1>
+    <p class="subtitle">用于定期确认 API Key、接口连通性和基本检索能力。</p>
+
+    <section>
+      <label for="apiKey">API Key</label>
+      <input id="apiKey" type="password" autocomplete="off" placeholder="粘贴 Semantic Scholar API Key">
+      <div class="row">
+        <button class="primary" id="saveAndTest">保存并测试</button>
+        <button class="secondary" id="clearKey">清除 Cookie</button>
+      </div>
+      <div id="status" role="status">尚未测试。Key 将保存在当前浏览器 Cookie 中。</div>
+      <p class="hint">页面不会把 Key 写入项目文件或发送到其他服务。若直接打开 HTML 后 Cookie 不持久或请求被浏览器拦截，请在此目录运行 <code>python -m http.server 8000</code>，再访问 <a href="http://localhost:8000/semantic-scholar-api-test.html">http://localhost:8000/semantic-scholar-api-test.html</a>。</p>
+    </section>
+
+    <section>
+      <label for="query">测试检索词</label>
+      <input id="query" value="retrieval augmented generation">
+      <div class="row">
+        <button class="primary" id="search">使用已保存 Key 检索</button>
+      </div>
+    </section>
+
+    <section>
+      <label>接口返回</label>
+      <pre id="output">暂无结果</pre>
+    </section>
+  </main>
+
+  <script>
+    const COOKIE_NAME = "semantic_scholar_api_key";
+    const ENDPOINT = "https://api.semanticscholar.org/graph/v1/paper/search";
+    const $ = (id) => document.getElementById(id);
+
+    function readCookie(name) {
+      const item = document.cookie.split("; ").find((part) => part.startsWith(name + "="));
+      return item ? decodeURIComponent(item.slice(name.length + 1)) : "";
+    }
+
+    function setCookie(name, value) {
+      document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${60 * 60 * 24 * 30}; path=/; SameSite=Lax`;
+    }
+
+    function setStatus(message, kind = "") {
+      $("status").textContent = message;
+      $("status").className = kind;
+    }
+
+    async function testApi(key) {
+      if (!key) {
+        setStatus("未找到 API Key，请先粘贴并保存。", "error");
+        return;
+      }
+      const query = $("query").value.trim() || "retrieval augmented generation";
+      $("saveAndTest").disabled = true;
+      $("search").disabled = true;
+      setStatus("请求中……");
+      $("output").textContent = "";
+      try {
+        const url = `${ENDPOINT}?query=${encodeURIComponent(query)}&limit=3&fields=title,year,venue,authors,url`;
+        const response = await fetch(url, { headers: { "x-api-key": key } });
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        $("output").textContent = JSON.stringify(data, null, 2);
+        if (!response.ok) {
+          setStatus(`请求失败：HTTP ${response.status}。请检查 Key、限流状态或网络。`, "error");
+        } else {
+          setStatus(`请求成功：返回 ${Array.isArray(data.data) ? data.data.length : 0} 条结果。`, "ok");
+        }
+      } catch (error) {
+        $("output").textContent = String(error);
+        setStatus("请求未完成，可能是浏览器 CORS、网络或本地 file:// 限制。", "error");
+      } finally {
+        $("saveAndTest").disabled = false;
+        $("search").disabled = false;
+      }
+    }
+
+    const savedKey = readCookie(COOKIE_NAME);
+    if (savedKey) {
+      $("apiKey").value = savedKey;
+      setStatus("已读取 Cookie 中的 Key，可以直接测试。", "ok");
+    }
+    $("saveAndTest").addEventListener("click", () => {
+      const key = $("apiKey").value.trim();
+      if (!key) { setStatus("请输入 API Key。", "error"); return; }
+      setCookie(COOKIE_NAME, key);
+      testApi(key);
+    });
+    $("search").addEventListener("click", () => testApi(readCookie(COOKIE_NAME)));
+    $("clearKey").addEventListener("click", () => {
+      document.cookie = `${COOKIE_NAME}=; max-age=0; path=/; SameSite=Lax`;
+      $("apiKey").value = "";
+      setStatus("已清除 Cookie 中的 Key。", "ok");
+      $("output").textContent = "暂无结果";
+    });
+  </script>
+</body>
+</html>
