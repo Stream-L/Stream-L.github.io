@@ -9,7 +9,7 @@ links:
     description: 用于 Zotero 的 Actions & Tags 插件笔记模板生成工具
     website: /matrix-script-generator.html
     image: https://www.zotero.org/static/images/theme/zotero-logo.svg
-  - title: semanticscholar api测试
+  - title: semanticscholarAPI测试
     description: semanticscholar api测试，key用cookie测试，经常测试防止失效
     website: /semantic-scholar-api-test.html
     image: https://www.svgrepo.com/show/447405/images-alt2.svg
