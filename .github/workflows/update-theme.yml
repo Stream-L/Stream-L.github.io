@@ -19,7 +19,7 @@ jobs:
 
       - name: Update theme
         run: |
-          git submodule update --remote --merge
+          git submodule update --remote --checkout
 
       - name: Commit changes
         run: |
