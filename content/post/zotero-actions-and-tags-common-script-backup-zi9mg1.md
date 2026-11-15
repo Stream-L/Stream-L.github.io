@@ -3,7 +3,7 @@ title: Zotero Actions and Tags 常用脚本备份
 slug: zotero-actions-and-tags-common-script-backup-zi9mg1
 url: /post/zotero-actions-and-tags-common-script-backup-zi9mg1.html
 date: '2026-11-13 17:51:12+08:00'
-lastmod: '2026-11-13 18:31:00+08:00'
+lastmod: '2026-11-13 18:25:01+08:00'
 tags:
   - zotero
   - 插件
@@ -20,7 +20,7 @@ isCJKLanguage: true
 
 # Zotero Actions and Tags 常用脚本备份
 
-# 说明
+## 说明
 
 需安装 Actions and Tags 插件
 
@@ -36,9 +36,9 @@ isCJKLanguage: true
 
 ‍
 
-# 脚本
+## 脚本
 
-## 自动翻译标题与摘要
+### 自动翻译标题与摘要
 
 `名称`​：自动翻译标题与摘要
 
@@ -156,7 +156,7 @@ try {
 
 ‍
 
-## 批量处理标签
+### 批量处理标签
 
 `名称`​：批量处理标签
 
@@ -684,7 +684,7 @@ const window = require("window");
 
 ‍
 
-## 复制链接
+### 复制链接
 
 `名称`​：复制链接
 
@@ -870,7 +870,7 @@ return `[Copy Zotero Link] 链接 ${uri} 已复制。`;
 
 ‍
 
-## 批量为多个条目基于Better Notes模板创建子笔记
+### 批量为多个条目基于Better Notes模板创建子笔记
 
 `名称`​：批量模板笔记
 
@@ -1170,7 +1170,7 @@ main();
 
 ‍
 
-## 创建文献矩阵（元数据+标签批注）
+### 创建文献矩阵（元数据+标签批注）
 
 `名称`​：创建文献矩阵
 
