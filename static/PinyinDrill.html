@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>普测拼音刷题 · 键盘练习原型</title>
+<title>普测拼音刷题 · 易错字词拼音练习</title>
+<meta name="theme-color" content="#f4f6f8">
 <style>
   :root{
     --bg:#f4f6f8; --card:#ffffff; --ink:#1f2933; --sub:#64727f; --line:#e2e8ee;
@@ -16,15 +17,28 @@
     font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
     background:var(--bg); color:var(--ink); line-height:1.5;
     -webkit-text-size-adjust:100%;
+    -webkit-tap-highlight-color:transparent;
   }
+  html{color-scheme:light}
   .wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+  /* 布局：窄屏上下排（控制条在上），宽屏左右排（选项在左，进度与答题区在右） */
+  .layout{display:flex;flex-direction:column;gap:16px}
+  .main{display:flex;flex-direction:column;gap:16px;min-width:0}
+  @media (min-width:900px){
+    .wrap{max-width:1080px;padding-top:24px}
+    .layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:20px;align-items:start}
+    .controls{position:sticky;top:18px}
+    #remoteUrl{width:100%}
+    .stem{font-size:44px}
+    .stem.pinyin{font-size:34px}
+  }
   header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
   header.top h1{font-size:20px;font-weight:700}
   header.top .meta{font-size:13px;color:var(--sub)}
 
   /* 控制条 */
   .controls{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    box-shadow:var(--shadow);padding:14px 16px;margin-bottom:16px;display:grid;gap:12px}
+    box-shadow:var(--shadow);padding:14px 16px;display:grid;gap:12px;align-content:start}
   .ctl-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .ctl-row .label{font-size:13px;color:var(--sub);min-width:64px}
   .seg{display:inline-flex;background:#eef2f5;border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
@@ -44,7 +58,7 @@
   .answer-row{display:flex;gap:10px;flex-wrap:wrap}
   .answer-row input{flex:1;min-width:180px;font-size:20px;padding:12px 14px;border:1.5px solid var(--line);
     border-radius:10px;outline:none;font-family:inherit}
-  .answer-row input:focus{border-color:var(--brand)}
+  .answer-row input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,168,.14)}
   .choice-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .choice-btn{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:14px 12px;
     font-size:19px;cursor:pointer;font-family:inherit;color:var(--ink);letter-spacing:.03em}
@@ -66,10 +80,21 @@
   .feedback .fb-line b{font-weight:600}
   .next-row{margin-top:16px;display:flex;justify-content:flex-end;gap:10px}
 
+  /* 进度 */
+  .progress{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:12px 16px}
+  .prog-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--sub)}
+  .prog-reset{border:0;background:#eef2f5;color:var(--sub);font-size:12px;border-radius:8px;
+    padding:5px 10px;cursor:pointer;font-family:inherit}
+  .prog-reset:hover{color:var(--ink)}
+  .prog-reset:disabled{opacity:.45;cursor:default}
+  .prog-track{height:6px;background:#eef2f5;border-radius:3px;overflow:hidden;margin-top:9px}
+  .prog-track i{display:block;height:100%;width:0;background:var(--brand);border-radius:3px;
+    transition:width .25s ease}
+
   /* 统计 */
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
-  .stat .num{font-size:22px;font-weight:700}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .stat .num{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
   .stat .cap{font-size:12px;color:var(--sub);margin-top:2px}
 
   /* 错题本弹窗 */
@@ -77,7 +102,7 @@
     align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:40}
   .modal-mask.show{display:flex}
   .modal-panel{background:var(--card);border-radius:var(--radius);box-shadow:0 12px 36px rgba(20,40,60,.22);
-    width:100%;max-width:560px;max-height:76vh;display:flex;flex-direction:column}
+    width:100%;max-width:560px;max-height:76vh;display:flex;flex-direction:column;overscroll-behavior:contain}
   .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:16px 18px;border-bottom:1px solid var(--line)}
   .modal-head h2{font-size:15px;display:flex;align-items:baseline;gap:8px}
@@ -100,22 +125,54 @@
   .wrong-item a.dict-link:hover{text-decoration:underline}
   .feedback a.dict-link{color:inherit;text-decoration:underline}
   .empty{color:var(--sub);font-size:13px}
-  .hint{font-size:12px;color:var(--sub);margin-top:14px;line-height:1.7}
+  /* 悬浮提示：JS 定位的 fixed 气泡，不参与布局，不会撑出横向滚动 */
+  #tip{position:fixed;left:0;top:0;z-index:60;background:#1f2d3a;color:#fff;font-size:12px;
+    line-height:1.55;padding:7px 10px;border-radius:8px;max-width:min(260px, calc(100vw - 24px));text-align:left;
+    box-shadow:0 8px 22px rgba(20,40,60,.22);opacity:0;visibility:hidden;
+    transition:opacity .12s ease;pointer-events:none}
+  .tip-q{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;
+    border-radius:50%;background:#eef2f5;color:var(--sub);font-size:11px;cursor:help;user-select:none}
+  .tip-line{font-size:12px;color:var(--sub);margin-top:12px;text-align:center;line-height:1.6}
+  /* 页尾 */
+  footer.foot{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:center;font-size:13px;color:var(--sub)}
+  footer.foot .author-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+  footer.foot .separator{opacity:.4}
+  footer.foot a{color:var(--sub);text-decoration:none;border-bottom:1px dotted currentColor;padding-bottom:1px}
+  footer.foot a:hover{color:var(--brand);border-bottom-color:var(--brand)}
+  header.top .sub{font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.7}
+  header.top .sub #todayMeta{margin-left:8px;white-space:nowrap}
   select{padding:7px 10px;font-size:13px;border:1px solid var(--line);border-radius:8px;
     background:var(--card);color:var(--ink);font-family:inherit;max-width:100%}
+  #remoteUrl{width:230px;max-width:100%}
+  #importInfo{flex:1 0 100%;font-size:12px;line-height:1.6}
   .syl{display:inline-block}
   .syl.neu{border-bottom:2px dotted var(--sub);line-height:1.25}
   .stem .syl.neu{color:var(--sub)}
   kbd{background:#eef2f5;border-radius:5px;padding:1px 6px;font-size:12px;font-family:inherit}
+  /* 放在最后，确保覆盖上面的基础宽度 */
+  @media (min-width:900px){ #remoteUrl{width:auto;flex:1 1 200px;min-width:0} }
+  /* 触屏与动效偏好 */
+  .seg button,.btn,.choice-btn,.prog-reset,.chk,.close{touch-action:manipulation}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>普测拼音刷题</h1>
+    <div>
+      <h1>普测拼音刷题</h1>
+      <div class="sub">
+        <span>普通话水平测试 · 易错字词 / 难字生僻 · 键盘拼音练习</span>
+        <span id="todayMeta"></span>
+      </div>
+    </div>
     <span class="meta" id="libMeta">题库加载中…</span>
   </header>
 
+  <div class="layout">
   <!-- 控制条 -->
   <section class="controls">
     <div class="ctl-row">
@@ -143,13 +200,13 @@
         <button data-scope="hard">难字生僻</button>
         <button data-scope="yicuo">易错</button>
       </div>
-      <label class="chk"><input type="checkbox" id="wrongOnly"> 只练错题</label>
-      <label class="chk"><input type="checkbox" id="ignoreTone"> 忽略声调判题</label>
+      <label class="chk tip" data-tip="只从错题本里抽题；错题连续答对三次才移出"><input type="checkbox" id="wrongOnly"> 只练错题</label>
+      <label class="chk tip" data-tip="判题时不比较声调，只要音节对就算对"><input type="checkbox" id="ignoreTone"> 忽略声调判题</label>
     </div>
     <div class="ctl-row">
       <span class="label">来源</span>
       <select id="srcSel"><option value="">全部来源</option></select>
-      <label class="chk"><input type="checkbox" id="autoNext" checked> 答对自动下一题</label>
+      <label class="chk tip" data-tip="答对后稍等片刻自动进入下一题；关掉则需按回车换题"><input type="checkbox" id="autoNext" checked> 答对自动下一题</label>
     </div>
     <div class="ctl-row">
       <span class="label">顺序</span>
@@ -157,15 +214,29 @@
         <button data-order="random" class="on">随机</button>
         <button data-order="seq">顺序</button>
       </div>
-      <button class="btn ghost" id="importBtn" style="padding:6px 12px;font-size:13px">本地 JSON</button>
+      <button class="btn ghost tip" id="importBtn" style="padding:6px 12px;font-size:13px"
+              data-tip="导入自己的词库 JSON：数组，字段 word / pinyin / tags / source；会校验拼音格式与音节数，同名词条覆盖内置读音">本地 JSON</button>
       <input type="file" id="importFile" accept=".json,application/json" style="display:none">
-      <input id="remoteUrl" type="text" autocomplete="off" spellcheck="false"
+      <input id="remoteUrl" type="text" inputmode="url" autocomplete="off" spellcheck="false"
              placeholder="词库 JSON 网址（留空用默认）"
-             style="padding:6px 10px;font-size:13px;width:230px;border:1px solid var(--line);border-radius:8px;background:var(--card)">
+             style="padding:6px 10px;font-size:13px;border:1px solid var(--line);border-radius:8px;background:var(--card)">
+      <span class="tip-q tip" data-tip="填词库 JSON 的网址再点「从网址加载」；该网址需允许跨站读取">?</span>
       <button class="btn ghost" id="remoteBtn" style="padding:6px 12px;font-size:13px">从网址加载</button>
-      <button class="btn ghost" id="openWrongBtn" style="padding:6px 12px;font-size:13px">错题本 <span id="wrongCountBtn">0</span></button>
+      <button class="btn ghost tip" id="openWrongBtn" style="padding:6px 12px;font-size:13px"
+              data-tip="打开错题本；连续答对三次自动移出，也能手动移除或清空">错题本 <span id="wrongCountBtn">0</span></button>
       <span class="meta" id="importInfo"></span>
     </div>
+  </section>
+
+  <div class="main">
+  <!-- 进度 -->
+  <section class="progress">
+    <div class="prog-top">
+      <span id="progText">已刷 0 / 0 条</span>
+      <button class="prog-reset tip" id="progResetBtn"
+              data-tip="清空所有已刷记录，已刷过的词会重新进入题目池（不影响错题本）">重置进度</button>
+    </div>
+    <div class="prog-track"><i id="progFill"></i></div>
   </section>
 
   <!-- 统计 -->
@@ -181,17 +252,20 @@
     <div class="stem-tag" id="stemTag">题目</div>
     <div class="stem" id="stem">加载中…</div>
     <div class="answer-row">
-      <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+      <input id="answer" type="text" enterkeyhint="go" autocomplete="off" autocapitalize="off" spellcheck="false"
+             title="可用数字标调：音节后加 1 阴平 2 阳平 3 上声 4 去声，轻声不标（0 或 5 也行），如 zhu4 yin1、gan1 jing0；也可直接打带调字母，v 等于 ü"
              placeholder="如 huo3 che1，回车提交">
       <button class="btn primary" id="submitBtn">提交</button>
     </div>
     <div class="choice-row" id="choiceRow" style="display:none"></div>
-    <div class="feedback" id="feedback"></div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
     <div class="next-row" id="nextRow" style="display:none">
       <button class="btn ghost" id="wrongToggleBtn">移出错题本</button>
       <button class="btn primary" id="nextBtn">下一题 ↵</button>
     </div>
   </section>
+  </div><!-- /.main -->
+  </div><!-- /.layout -->
 
   <!-- 错题本弹窗 -->
   <div class="modal-mask" id="wrongModal">
@@ -200,22 +274,27 @@
         <h2>错题本 <span class="meta" id="wrongCount"></span></h2>
         <div class="modal-actions">
           <button id="clearWrongBtn">清空错题</button>
-          <button class="close" id="closeWrongBtn" title="关闭">×</button>
+          <button class="close" id="closeWrongBtn" title="关闭" aria-label="关闭">×</button>
         </div>
       </div>
       <div class="wrong-list" id="wrongList"></div>
     </div>
   </div>
 
-  <p class="hint">
-    操作：<kbd>回车</kbd> 提交 / 下一题；判题忽略空格与大小写，输入 <kbd>v</kbd> 等价于 <kbd>ü</kbd>。
-    「选读音」模式不用拼全拼，点选项或按 <kbd>1</kbd>–<kbd>4</kbd> 选择即可，适合专攻难字认读音。
-    拼音可用数字标调：音节后加 <kbd>1</kbd>阴平 <kbd>2</kbd>阳平 <kbd>3</kbd>上声 <kbd>4</kbd>去声，轻声不标（也可写 <kbd>0</kbd> 或 <kbd>5</kbd>），如 <code>zhu4 yin1</code>、<code>gan1 jing0</code>；也可直接打带调字母。
-    轻声音节在题目里带点状下划线，如 <code>白天 bái·tiān</code> 的轻声部分；答错若是轻声标调问题会给提示。
-    「范围」里的轻声、儿化按实际拼音判定，不依赖标签；来源下拉可只练某一个词表。
-    词库可「本地 JSON」导入（会校验拼音格式与音节数，同名词条覆盖内置读音），也可填「词库 JSON 网址」联网加载；把地址填进代码里的 <code>DEFAULT_REMOTE_URL</code> 即可打开页面自动拉取。远程文件需开放跨域（CORS，返回 <code>Access-Control-Allow-Origin: *</code>），否则浏览器会拦截。
-    错题本由顶部「错题本」按钮打开；错题需连续答对三次才移出（红 → 橙红 → 黄 → 消失），中途答错回到红色。答对后默认 700ms 自动下一题，可在「来源」行关掉。
+  <p class="tip-line">
+    回车 提交 / 下一题 · 选读音模式可按 <kbd>1</kbd>–<kbd>4</kbd> 选择 · 轻声音节带点状下划线
   </p>
+
+  <footer class="foot">
+    <div class="author-info">
+      <span class="author-name">作者: Stream-L</span>
+      <span class="separator">|</span>
+      <a href="https://stream-l.github.io/" target="_blank" rel="noopener">博客</a>
+      <span class="separator">|</span>
+      <span class="credit">整理：DeepSeek Harness</span>
+    </div>
+  </footer>
+<div id="tip" role="tooltip"></div>
 </div>
 
 <script>
@@ -244,6 +323,20 @@ function writeWrongStore(obj){
 // 词典查询链接（百度汉语，字词通用）
 function dictUrl(w){ return "https://hanyu.baidu.com/s?wd="+encodeURIComponent(w); }
 
+// ---------- 已刷进度：localStorage 持久化 ----------
+// 2500 条词用 cookie 存会超 4KB 上限（会被浏览器悄悄截断），而且 file:// 下 cookie 本身就被禁用，
+// 所以这里只用 localStorage；存的是「答对过一次」的词，答错的词不进已完成，还会再出。
+const DONE_KEY="pth_done_v1";
+function readDoneStore(){
+  try{
+    const arr=JSON.parse(localStorage.getItem(DONE_KEY)||"[]");
+    return Array.isArray(arr)?arr.filter(w=>typeof w==="string"):[];
+  }catch(e){ return []; }
+}
+function saveDone(){
+  try{ localStorage.setItem(DONE_KEY, JSON.stringify([...state.done])); }catch(e){}
+}
+
 // 外部导入词条：同名（word）会覆盖内置 RAW 的读音，未重名的追加到 EXTRA
 const EXTRA=[];
 const overridden=new Set();
@@ -270,7 +363,8 @@ const state = {
   cur: null,
   answered: false,
   round: { total: 0, ok: 0, bad: 0 },
-  wrong: new Map(Object.entries(readWrongStore()))
+  wrong: new Map(Object.entries(readWrongStore())),
+  done: new Set(readDoneStore())   // 已刷（答对过）的词
 };
 let autoTimer = null;
 
@@ -502,16 +596,27 @@ function isValidVariant(v, refPy){
 }
 
 // ---------- 取题 ----------
+function matchScope(x, scope){
+  if(scope==="single") return x.word.length===1;
+  if(scope==="multi") return x.word.length>1;
+  if(scope==="erhua") return isErhuaEntry(x);
+  if(scope==="qingsheng") return hasNeutral(x.pinyin);
+  if(scope==="hard") return (x.tags||[]).includes("难字");
+  if(scope==="yicuo") return (x.tags||[]).includes("易错");
+  return true;
+}
+// 当前范围+来源下的全部词条（不含「已刷」过滤），进度条与出题共用
+function scopeList(scope, src){
+  const s = scope===undefined ? state.scope : scope;
+  const k = src===undefined ? state.src : src;
+  return allWords().filter(x=>matchScope(x,s) && matchesSource(x,k));
+}
+
 function buildPool(){
-  let list = allWords().slice();
-  if(state.scope==="single") list = list.filter(x=>x.word.length===1);
-  else if(state.scope==="multi") list = list.filter(x=>x.word.length>1);
-  else if(state.scope==="erhua") list = list.filter(isErhuaEntry);
-  else if(state.scope==="qingsheng") list = list.filter(x=>hasNeutral(x.pinyin));
-  else if(state.scope==="hard") list = list.filter(x=>(x.tags||[]).includes("难字"));
-  else if(state.scope==="yicuo") list = list.filter(x=>(x.tags||[]).includes("易错"));
-  if(state.src) list = list.filter(x=>matchesSource(x,state.src));
+  // 只练错题时按错题本出题，否则跳过已经答对过的词，避免重复刷
+  let list = scopeList();
   if(state.wrongOnly) list = list.filter(x=>state.wrong.has(x.word));
+  else list = list.filter(x=>!state.done.has(x.word));
   if(state.order==="random"){
     for(let i=list.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
@@ -520,6 +625,40 @@ function buildPool(){
   }
   state.pool = list;
   state.idx = 0;
+  renderProgress();
+}
+
+function renderProgress(){
+  const all = scopeList();
+  const total = all.length;
+  const done = all.reduce((n,x)=>n+(state.done.has(x.word)?1:0),0);
+  const raw = total ? done*100/total : 0;                  // 真实百分比，用于进度条
+  const shown = raw>=10 ? Math.round(raw) : Math.round(raw*100)/100;  // 小于 10% 保留两位，避免长期显示 0%
+  const txt=document.getElementById("progText");
+  if(txt) txt.textContent = total ? `当前范围已刷 ${done} / ${total} 条 · ${shown}%` : "当前范围没有词条";
+  const fill=document.getElementById("progFill");
+  if(fill) fill.style.width = raw+"%";
+  const btn=document.getElementById("progResetBtn");
+  if(btn) btn.disabled = done===0;
+}
+
+function showEnd(){
+  document.getElementById("stem").textContent = state.wrongOnly ? "错题已练完" : "这个范围已经全部刷完";
+  document.getElementById("answer").style.display="none";
+  document.getElementById("submitBtn").style.display="none";
+  document.getElementById("choiceRow").style.display="none";
+  document.getElementById("nextRow").style.display="none";
+  state.cur=null;
+  renderStemTagEnd();
+}
+function renderStemTagEnd(){
+  const tag=document.getElementById("stemTag");
+  if(!tag) return;
+  if(state.wrongOnly){ tag.textContent="错题本已清空"; return; }
+  const total=scopeList().length;
+  tag.textContent = total
+    ? `已刷完 ${total} 条 · 点上方「重置进度」可从头再练`
+    : "当前范围没有题目 · 换个范围或来源试试";
 }
 
 function nextQuestion(){
@@ -528,11 +667,7 @@ function nextQuestion(){
     // 只练错题：未掌握的错题继续循环，直到全部移出
     if(state.wrongOnly && state.wrong.size>0) buildPool();
     if(state.idx >= state.pool.length){
-      document.getElementById("stem").textContent = state.wrongOnly ? "错题已练完" : "本题库已练完";
-      document.getElementById("answer").style.display="none";
-      document.getElementById("submitBtn").style.display="none";
-      document.getElementById("choiceRow").style.display="none";
-      state.cur=null;
+      showEnd();
       return;
     }
   }
@@ -614,6 +749,8 @@ function finish(ok, userInput){
   const fb=document.getElementById("feedback");
   if(ok){
     state.round.ok++;
+    // 已刷记录：答对一次即记为已完成，之后不再出现（答错的不记，还会再练）
+    if(!state.done.has(c.word)){ state.done.add(c.word); saveDone(); }
     // 掌握度递进：错题答对一次升一级，连续答对三次才移出错题本（红 → 橙红 → 黄 → 消失）
     let kept=false, keptLv=0;
     if(state.wrong.has(c.word)){
@@ -641,7 +778,7 @@ function finish(ok, userInput){
   saveWrong();
   document.getElementById("nextRow").style.display="flex";
   document.getElementById("nextBtn").focus();
-  renderStats(); renderWrong();
+  renderStats(); renderWrong(); renderProgress();
   if(ok && state.autoNext){
     autoTimer=setTimeout(()=>{ autoTimer=null; nextQuestion(); },700);
   }
@@ -775,6 +912,14 @@ document.getElementById("wrongToggleBtn").onclick=()=>{
 document.getElementById("clearWrongBtn").onclick=()=>{
   if(confirm("确定清空全部错题？")){ state.wrong.clear(); saveWrong(); renderWrong(); }
 };
+function resetProgress(){
+  if(!state.done.size) return false;
+  if(!confirm(`确定清空已刷记录？共 ${state.done.size} 条，清空后这些词会重新进入题目池。`)) return false;
+  state.done.clear(); saveDone();
+  buildPool(); nextQuestion(); renderProgress();
+  return true;
+}
+document.getElementById("progResetBtn").onclick=resetProgress;
 
 // ---------- 错题本弹窗开关 ----------
 const wrongModal=document.getElementById("wrongModal");
@@ -880,9 +1025,9 @@ async function loadRemote(url, save){
     if(save!==false){
       try{ localStorage.setItem(REMOTE_STORE_KEY, url); }catch(_){}
     }
-    setInfo(`联网词库已加载：新增 ${res.added}，覆盖 ${res.replaced}${res.bad.length?`，无效 ${res.bad.length}`:""}`);
+    setInfo(`已加载联网词库：新增 ${res.added} 条${res.replaced?`，覆盖内置 ${res.replaced} 条`:""}${res.bad.length?`，${res.bad.length} 条格式不对已跳过`:""}`);
   }catch(err){
-    setInfo("联网加载失败："+err.message+"（检查网址，或远程未开放跨域 CORS）");
+    setInfo("联网加载失败：检查网址是否可访问，或该网址不允许跨站读取。");
   }
 }
 
@@ -915,8 +1060,44 @@ document.addEventListener("keydown",e=>{
   }
 });
 
+// ---------- 悬浮提示 ----------
+const tipEl = document.getElementById("tip");
+if(tipEl && document.body && document.body.appendChild) document.body.appendChild(tipEl);
+function placeTip(el){
+  const txt = el && el.dataset ? el.dataset.tip : "";
+  if(!tipEl || !txt) return;
+  tipEl.textContent = txt;
+  tipEl.style.visibility = "visible";
+  tipEl.style.opacity = "1";
+  const r = el.getBoundingClientRect();
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const left = Math.min(Math.max(8, r.left), Math.max(8, innerWidth - w - 8));
+  let top = r.bottom + 7;
+  if(top + h > innerHeight - 8) top = Math.max(8, r.top - h - 7);
+  tipEl.style.left = left + "px";
+  tipEl.style.top = top + "px";
+}
+function hideTip(){ if(tipEl){ tipEl.style.opacity = "0"; tipEl.style.visibility = "hidden"; } }
+function tipTarget(e){
+  const t = e && e.target;
+  return t && t.closest ? t.closest("[data-tip]") : null;
+}
+document.addEventListener("mouseover", e => { const el = tipTarget(e); if(el) placeTip(el); });
+document.addEventListener("mouseout", e => { const el = tipTarget(e); if(el) hideTip(); });
+document.addEventListener("focusin", e => { const el = tipTarget(e); if(el) placeTip(el); });
+document.addEventListener("focusout", hideTip);
+window.addEventListener("scroll", hideTip, { passive: true });
+window.addEventListener("resize", hideTip);
+
 // ---------- 启动 ----------
-buildPool(); nextQuestion(); renderStats(); renderWrong(); refreshLibMeta(); refreshSrcOptions();
+buildPool(); nextQuestion(); renderStats(); renderWrong(); renderProgress(); refreshLibMeta(); refreshSrcOptions();
+// 页头日期
+(function showToday(){
+  const el=document.getElementById("todayMeta");
+  if(!el) return;
+  const d=new Date(), p=n=>String(n).padStart(2,"0");
+  el.textContent = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+})();
 // 回填上次使用的远程网址；有默认/已存地址则自动联网加载（失败不影响内置题库）
 (function initRemote(){
   let saved="";
