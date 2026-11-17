@@ -101,6 +101,11 @@
   .feedback a.dict-link{color:inherit;text-decoration:underline}
   .empty{color:var(--sub);font-size:13px}
   .hint{font-size:12px;color:var(--sub);margin-top:14px;line-height:1.7}
+  select{padding:7px 10px;font-size:13px;border:1px solid var(--line);border-radius:8px;
+    background:var(--card);color:var(--ink);font-family:inherit;max-width:100%}
+  .syl{display:inline-block}
+  .syl.neu{border-bottom:2px dotted var(--sub);line-height:1.25}
+  .stem .syl.neu{color:var(--sub)}
   kbd{background:#eef2f5;border-radius:5px;padding:1px 6px;font-size:12px;font-family:inherit}
 </style>
 </head>
@@ -108,7 +113,7 @@
 <div class="wrap">
   <header class="top">
     <h1>普测拼音刷题</h1>
-    <span class="meta">纯键盘练习 · 不录音 · 内联基础示例 348 条，可联网加载 / 导入词库</span>
+    <span class="meta" id="libMeta">题库加载中…</span>
   </header>
 
   <!-- 控制条 -->
@@ -136,9 +141,15 @@
         <button data-scope="erhua">儿化</button>
         <button data-scope="qingsheng">轻声</button>
         <button data-scope="hard">难字生僻</button>
+        <button data-scope="yicuo">易错</button>
       </div>
       <label class="chk"><input type="checkbox" id="wrongOnly"> 只练错题</label>
       <label class="chk"><input type="checkbox" id="ignoreTone"> 忽略声调判题</label>
+    </div>
+    <div class="ctl-row">
+      <span class="label">来源</span>
+      <select id="srcSel"><option value="">全部来源</option></select>
+      <label class="chk"><input type="checkbox" id="autoNext" checked> 答对自动下一题</label>
     </div>
     <div class="ctl-row">
       <span class="label">顺序</span>
@@ -199,15 +210,16 @@
   <p class="hint">
     操作：<kbd>回车</kbd> 提交 / 下一题；判题忽略空格与大小写，输入 <kbd>v</kbd> 等价于 <kbd>ü</kbd>。
     「选读音」模式不用拼全拼，点选项或按 <kbd>1</kbd>–<kbd>4</kbd> 选择即可，适合专攻难字认读音。
-    拼音可用数字标调：音节后加 <kbd>1</kbd>阴平 <kbd>2</kbd>阳平 <kbd>3</kbd>上声 <kbd>4</kbd>去声，轻声不标，如 <code>zhu4 yin1</code>；也可直接打带调字母。
-    注意：当前主库的轻声标注尚不完整，轻声题以后续补齐的官方轻声表为准；本原型先练声母、韵母、声调与儿化。
-    词库可「本地 JSON」导入，也可填「词库 JSON 网址」联网加载；把地址填进代码里的 <code>DEFAULT_REMOTE_URL</code> 即可打开页面自动拉取。远程文件需开放跨域（CORS，返回 <code>Access-Control-Allow-Origin: *</code>），否则浏览器会拦截。
-    错题本由顶部「错题本」按钮打开；错题需连续答对三次才移出（红 → 橙红 → 黄 → 消失），中途答错回到红色。
+    拼音可用数字标调：音节后加 <kbd>1</kbd>阴平 <kbd>2</kbd>阳平 <kbd>3</kbd>上声 <kbd>4</kbd>去声，轻声不标（也可写 <kbd>0</kbd> 或 <kbd>5</kbd>），如 <code>zhu4 yin1</code>、<code>gan1 jing0</code>；也可直接打带调字母。
+    轻声音节在题目里带点状下划线，如 <code>白天 bái·tiān</code> 的轻声部分；答错若是轻声标调问题会给提示。
+    「范围」里的轻声、儿化按实际拼音判定，不依赖标签；来源下拉可只练某一个词表。
+    词库可「本地 JSON」导入（会校验拼音格式与音节数，同名词条覆盖内置读音），也可填「词库 JSON 网址」联网加载；把地址填进代码里的 <code>DEFAULT_REMOTE_URL</code> 即可打开页面自动拉取。远程文件需开放跨域（CORS，返回 <code>Access-Control-Allow-Origin: *</code>），否则浏览器会拦截。
+    错题本由顶部「错题本」按钮打开；错题需连续答对三次才移出（红 → 橙红 → 黄 → 消失），中途答错回到红色。答对后默认 700ms 自动下一题，可在「来源」行关掉。
   </p>
 </div>
 
 <script>
-const RAW = [{"word":"白天","pinyin":"bái·tiān","tags":["轻声"]},{"word":"报酬","pinyin":"bào·chóu","tags":["轻声"]},{"word":"报复","pinyin":"bào·fù","tags":["轻声"]},{"word":"别人","pinyin":"bié·rén","tags":["轻声"]},{"word":"玻璃","pinyin":"bō·lí","tags":["轻声"]},{"word":"差不多","pinyin":"chà·bùduō","tags":["轻声"]},{"word":"长处","pinyin":"cháng·chù","tags":["轻声"]},{"word":"诚实","pinyin":"chéng·shí","tags":["轻声"]},{"word":"出来","pinyin":"chū·lái","tags":["轻声"]},{"word":"出去","pinyin":"chū·qù","tags":["轻声"]},{"word":"刺激","pinyin":"cì·jī","tags":["轻声"]},{"word":"聪明","pinyin":"cōng·míng","tags":["轻声"]},{"word":"错误","pinyin":"cuò·wù","tags":["轻声"]},{"word":"答复","pinyin":"dá·fù","tags":["轻声"]},{"word":"道理","pinyin":"dào·lǐ","tags":["轻声"]},{"word":"底下","pinyin":"dǐ·xià","tags":["轻声"]},{"word":"懂得","pinyin":"dǒng·dé","tags":["轻声"]},{"word":"对不起","pinyin":"duì·bùqǐ","tags":["轻声"]},{"word":"分量","pinyin":"fèn·liàng","tags":["轻声"]},{"word":"夫人","pinyin":"fū·rén","tags":["轻声"]},{"word":"父亲","pinyin":"fù·qīn","tags":["轻声"]},{"word":"干净","pinyin":"gān·jing","tags":["轻声"]},{"word":"感激","pinyin":"gǎn·jī","tags":["轻声"]},{"word":"跟前","pinyin":"gēn·qián","tags":["轻声"]},{"word":"工人","pinyin":"gōng·rén","tags":["轻声"]},{"word":"公平","pinyin":"gōng·píng","tags":["轻声"]},{"word":"固执","pinyin":"gù·zhí","tags":["轻声"]},{"word":"过来","pinyin":"guò·lái","tags":["轻声"]},{"word":"好处","pinyin":"hǎo·chù","tags":["轻声"]},{"word":"喉咙","pinyin":"hóu·lóng","tags":["轻声"]},{"word":"后边","pinyin":"hòu·biān","tags":["轻声"]},{"word":"后面","pinyin":"hòu·miàn","tags":["轻声"]},{"word":"花费","pinyin":"huā·fèi","tags":["轻声"]},{"word":"回来","pinyin":"huí·lái","tags":["轻声"]},{"word":"回去","pinyin":"huí·qù","tags":["轻声"]},{"word":"活动","pinyin":"huó·dòng","tags":["轻声"]},{"word":"机会","pinyin":"jī·huì","tags":["轻声"]},{"word":"机器","pinyin":"jī·qì","tags":["轻声"]},{"word":"机器人","pinyin":"jī·qìrén","tags":["轻声"]},{"word":"记得","pinyin":"jì·dé","tags":["轻声"]},{"word":"家具","pinyin":"jiā·jù","tags":["轻声"]},{"word":"价钱","pinyin":"jià·qián","tags":["轻声"]},{"word":"讲究","pinyin":"jiǎng·jiū","tags":["轻声"]},{"word":"进来","pinyin":"jìn·lái","tags":["轻声"]},{"word":"进去","pinyin":"jìn·qù","tags":["轻声"]},{"word":"看见","pinyin":"kàn·jiàn","tags":["轻声"]},{"word":"会计","pinyin":"kuài·jì","tags":["轻声"]},{"word":"来不及","pinyin":"lái·bùjí","tags":["轻声"]},{"word":"老人家","pinyin":"lǎo·rén·jiā","tags":["轻声"]},{"word":"老鼠","pinyin":"lǎo·shǔ","tags":["轻声"]},{"word":"里边","pinyin":"lǐ·biān","tags":["轻声"]},{"word":"里面","pinyin":"lǐ·miàn","tags":["轻声"]},{"word":"力量","pinyin":"lì·liàng","tags":["轻声"]},{"word":"邻居","pinyin":"lín·jū","tags":["轻声"]},{"word":"逻辑","pinyin":"luó·jí","tags":["轻声"]},{"word":"毛病","pinyin":"máo·bìng","tags":["轻声"]},{"word":"没有","pinyin":"méi·yǒu","tags":["轻声"]},{"word":"母亲","pinyin":"mǔ·qīn","tags":["轻声"]},{"word":"哪里","pinyin":"nǎ·lǐ","tags":["轻声"]},{"word":"那里","pinyin":"nà·lǐ","tags":["轻声"]},{"word":"佩服","pinyin":"pèi·fú","tags":["轻声"]},{"word":"菩萨","pinyin":"pú·sà","tags":["轻声"]},{"word":"葡萄","pinyin":"pú·táo","tags":["轻声"]},{"word":"妻子","pinyin":"qī·zǐ","tags":["轻声"]},{"word":"起来","pinyin":"qǐ·lái","tags":["轻声"]},{"word":"气氛","pinyin":"qì·fēn","tags":["轻声"]},{"word":"前边","pinyin":"qián·biān","tags":["轻声"]},{"word":"情形","pinyin":"qíng·xíng","tags":["轻声"]},{"word":"情绪","pinyin":"qíng·xù","tags":["轻声"]},{"word":"任务","pinyin":"rèn·wù","tags":["轻声"]},{"word":"容易","pinyin":"róng·yì","tags":["轻声"]},{"word":"上边","pinyin":"shàng·biān","tags":["轻声"]},{"word":"上来","pinyin":"shàng·lái","tags":["轻声"]},{"word":"上去","pinyin":"shàng·qù","tags":["轻声"]},{"word":"舍不得","pinyin":"shě·bù·dé","tags":["轻声"]},{"word":"身份","pinyin":"shēn·fèn","tags":["轻声"]},{"word":"神气","pinyin":"shén·qì","tags":["轻声"]},{"word":"使得","pinyin":"shǐ·dé","tags":["轻声"]},{"word":"势力","pinyin":"shì·lì","tags":["轻声"]},{"word":"书记","pinyin":"shū·jì","tags":["轻声"]},{"word":"熟悉","pinyin":"shú·xī","tags":["轻声"]},{"word":"说法","pinyin":"shuō·fǎ","tags":["轻声"]},{"word":"太阳","pinyin":"tài·yáng","tags":["轻声"]},{"word":"态度","pinyin":"tài·dù","tags":["轻声"]},{"word":"外边","pinyin":"wài·biān","tags":["轻声"]},{"word":"外面","pinyin":"wài·miàn","tags":["轻声"]},{"word":"味道","pinyin":"wèi·dào","tags":["轻声"]},{"word":"西瓜","pinyin":"xī·guā","tags":["轻声"]},{"word":"下边","pinyin":"xià·biān","tags":["轻声"]},{"word":"下来","pinyin":"xià·lái","tags":["轻声"]},{"word":"下面","pinyin":"xià·miàn","tags":["轻声"]},{"word":"下去","pinyin":"xià·qù","tags":["轻声"]},{"word":"显得","pinyin":"xiǎn·dé","tags":["轻声"]},{"word":"想法","pinyin":"xiǎng·fǎ","tags":["轻声"]},{"word":"小姐","pinyin":"xiǎo·jiě","tags":["轻声"]},{"word":"小心","pinyin":"xiǎo·x","tags":["轻声"]},{"word":"晓得","pinyin":"xiǎo·dé","tags":["轻声"]},{"word":"心里","pinyin":"xīn·lǐ","tags":["轻声"]},{"word":"新鲜","pinyin":"xīn·xiān","tags":["轻声"]},{"word":"烟囱","pinyin":"yān·cōng","tags":["轻声"]},{"word":"夜里","pinyin":"yè·lǐ","tags":["轻声"]},{"word":"已经","pinyin":"yǐ·jīng","tags":["轻声"]},{"word":"意见","pinyin":"yì·jiàn","tags":["轻声"]},{"word":"因为","pinyin":"yīn·wèi","tags":["轻声"]},{"word":"应付","pinyin":"yìng·fù","tags":["轻声"]},{"word":"用处","pinyin":"yòng·chù","tags":["轻声"]},{"word":"右边","pinyin":"yòu·biān","tags":["轻声"]},{"word":"遇见","pinyin":"yù·jiàn","tags":["轻声"]},{"word":"愿意","pinyin":"yuàn·yì","tags":["轻声"]},{"word":"早晨","pinyin":"zǎo·chén","tags":["轻声"]},{"word":"折磨","pinyin":"zhé·mó","tags":["轻声"]},{"word":"这里","pinyin":"zhè·lǐ","tags":["轻声"]},{"word":"知道","pinyin":"zhī·dào","tags":["轻声"]},{"word":"资格","pinyin":"zī·gé","tags":["轻声"]},{"word":"左边","pinyin":"zuǒ·biān","tags":["轻声"]},{"word":"把儿","pinyin":"bàr","tags":["儿化"]},{"word":"包干儿","pinyin":"bāogànr","tags":["儿化"]},{"word":"茶馆儿","pinyin":"cháguǎnr","tags":["儿化"]},{"word":"差点儿","pinyin":"chàdiǎnr","tags":["儿化"]},{"word":"大伙儿","pinyin":"dàhuǒr","tags":["儿化"]},{"word":"大婶儿","pinyin":"dàshěnr","tags":["儿化"]},{"word":"灯泡儿","pinyin":"dēngpàor","tags":["儿化"]},{"word":"儿","pinyin":"ér","tags":["儿化"]},{"word":"而","pinyin":"ér","tags":["儿化"]},{"word":"尔","pinyin":"ěr","tags":["儿化"]},{"word":"耳","pinyin":"ěr","tags":["儿化"]},{"word":"二","pinyin":"èr","tags":["儿化"]},{"word":"反而","pinyin":"fǎnér","tags":["儿化"]},{"word":"核儿","pinyin":"húr","tags":["儿化"]},{"word":"老伴儿","pinyin":"lǎobànr","tags":["儿化"]},{"word":"哪儿","pinyin":"nǎr","tags":["儿化"]},{"word":"那儿","pinyin":"nàr","tags":["儿化"]},{"word":"年头儿","pinyin":"niántóur","tags":["儿化"]},{"word":"小说儿","pinyin":"xiǎoshuōr","tags":["儿化"]},{"word":"笑话儿","pinyin":"xiàohuar","tags":["儿化"]},{"word":"一会儿","pinyin":"yīhuìr","tags":["儿化"]},{"word":"一块儿","pinyin":"yīkuàir","tags":["儿化"]},{"word":"这儿","pinyin":"zhèr","tags":["儿化"]},{"word":"螯","pinyin":"áo","tags":["难字"]},{"word":"揣","pinyin":"chuāi","tags":["难字"]},{"word":"犊","pinyin":"dú","tags":["难字"]},{"word":"戟","pinyin":"jǐ","tags":["难字"]},{"word":"揩","pinyin":"kāi","tags":["难字"]},{"word":"抡","pinyin":"lūn","tags":["难字"]},{"word":"拈","pinyin":"niān","tags":["难字"]},{"word":"瞟","pinyin":"piǎo","tags":["难字"]},{"word":"祛","pinyin":"qū","tags":["难字"]},{"word":"涮","pinyin":"shuàn","tags":["难字"]},{"word":"瓮","pinyin":"wèng","tags":["难字"]},{"word":"噎","pinyin":"yē","tags":["难字"]},{"word":"浙","pinyin":"zhè","tags":["难字"]},{"word":"谙","pinyin":"ān","tags":["难字"]},{"word":"婢","pinyin":"bì","tags":["难字"]},{"word":"跛","pinyin":"bǒ","tags":["难字"]},{"word":"阐","pinyin":"chǎn","tags":["难字"]},{"word":"怵","pinyin":"chù","tags":["难字"]},{"word":"冗","pinyin":"rǒng","tags":["难字"]},{"word":"霎","pinyin":"shà","tags":["难字"]},{"word":"悚","pinyin":"sǒng","tags":["难字"]},{"word":"誊","pinyin":"téng","tags":["难字"]},{"word":"皈","pinyin":"guī","tags":["难字"]},{"word":"涸","pinyin":"hé","tags":["难字"]},{"word":"秽","pinyin":"huì","tags":["难字"]},{"word":"汲","pinyin":"jí","tags":["难字"]},{"word":"勘","pinyin":"kān","tags":["难字"]},{"word":"翌","pinyin":"yì","tags":["难字"]},{"word":"掠","pinyin":"lüè","tags":["难字"]},{"word":"冢","pinyin":"zhǒng","tags":["难字"]},{"word":"阿","pinyin":"ā","tags":[]},{"word":"罢","pinyin":"bà","tags":[]},{"word":"薄","pinyin":"báo","tags":[]},{"word":"鼻","pinyin":"bí","tags":[]},{"word":"别","pinyin":"bié","tags":[]},{"word":"猜","pinyin":"cāi","tags":[]},{"word":"册","pinyin":"cè","tags":[]},{"word":"厂","pinyin":"chǎng","tags":[]},{"word":"成","pinyin":"chéng","tags":[]},{"word":"重","pinyin":"chóng","tags":[]},{"word":"窗","pinyin":"chuāng","tags":[]},{"word":"凑","pinyin":"còu","tags":[]},{"word":"袋","pinyin":"dài","tags":[]},{"word":"道","pinyin":"dào","tags":[]},{"word":"点","pinyin":"diǎn","tags":[]},{"word":"丢","pinyin":"diū","tags":[]},{"word":"渡","pinyin":"dù","tags":[]},{"word":"饿","pinyin":"è","tags":[]},{"word":"放","pinyin":"fàng","tags":[]},{"word":"缝","pinyin":"féng","tags":[]},{"word":"赋","pinyin":"fù","tags":[]},{"word":"稿","pinyin":"gǎo","tags":[]},{"word":"宫","pinyin":"gōng","tags":[]},{"word":"瓜","pinyin":"guā","tags":[]},{"word":"桂","pinyin":"guì","tags":[]},{"word":"行","pinyin":"háng","tags":[]},{"word":"哄","pinyin":"hōng","tags":[]},{"word":"滑","pinyin":"huá","tags":[]},{"word":"绘","pinyin":"huì","tags":[]},{"word":"即","pinyin":"jí","tags":[]},{"word":"甲","pinyin":"jiǎ","tags":[]},{"word":"件","pinyin":"jiàn","tags":[]},{"word":"角","pinyin":"jiǎo","tags":[]},{"word":"金","pinyin":"jīn","tags":[]},{"word":"景","pinyin":"jǐng","tags":[]},{"word":"具","pinyin":"jù","tags":[]},{"word":"扛","pinyin":"káng","tags":[]},{"word":"口","pinyin":"kǒu","tags":[]},{"word":"蜡","pinyin":"là","tags":[]},{"word":"离","pinyin":"lí","tags":[]},{"word":"良","pinyin":"liáng","tags":[]},{"word":"灵","pinyin":"líng","tags":[]},{"word":"拢","pinyin":"lǒng","tags":[]},{"word":"滤","pinyin":"lǜ","tags":[]},{"word":"蛮","pinyin":"mán","tags":[]},{"word":"门","pinyin":"mén","tags":[]},{"word":"明","pinyin":"míng","tags":[]},{"word":"拿","pinyin":"ná","tags":[]},{"word":"逆","pinyin":"nì","tags":[]},{"word":"欧","pinyin":"ōu","tags":[]},{"word":"配","pinyin":"pèi","tags":[]},{"word":"品","pinyin":"pǐn","tags":[]},{"word":"起","pinyin":"qǐ","tags":[]},{"word":"敲","pinyin":"qiāo","tags":[]},{"word":"求","pinyin":"qiú","tags":[]},{"word":"然","pinyin":"rán","tags":[]},{"word":"肉","pinyin":"ròu","tags":[]},{"word":"沙","pinyin":"shā","tags":[]},{"word":"蛇","pinyin":"shé","tags":[]},{"word":"省","pinyin":"shěng","tags":[]},{"word":"示","pinyin":"shì","tags":[]},{"word":"瘦","pinyin":"shòu","tags":[]},{"word":"霜","pinyin":"shuāng","tags":[]},{"word":"俗","pinyin":"sú","tags":[]},{"word":"他","pinyin":"tā","tags":[]},{"word":"塘","pinyin":"táng","tags":[]},{"word":"天","pinyin":"tiān","tags":[]},{"word":"痛","pinyin":"tòng","tags":[]},{"word":"挖","pinyin":"wā","tags":[]},{"word":"为","pinyin":"wéi","tags":[]},{"word":"吻","pinyin":"wěn","tags":[]},{"word":"吸","pinyin":"xī","tags":[]},{"word":"闲","pinyin":"xián","tags":[]},{"word":"想","pinyin":"xiǎng","tags":[]},{"word":"谢","pinyin":"xiè","tags":[]},{"word":"修","pinyin":"xiū","tags":[]},{"word":"鸭","pinyin":"yā","tags":[]},{"word":"阳","pinyin":"yáng","tags":[]},{"word":"一","pinyin":"yī","tags":[]},{"word":"亦","pinyin":"yì","tags":[]},{"word":"营","pinyin":"yíng","tags":[]},{"word":"幼","pinyin":"yòu","tags":[]},{"word":"原","pinyin":"yuán","tags":[]},{"word":"砸","pinyin":"zá","tags":[]},{"word":"增","pinyin":"zēng","tags":[]},{"word":"仗","pinyin":"zhàng","tags":[]},{"word":"挣","pinyin":"zhēng","tags":[]},{"word":"职","pinyin":"zhí","tags":[]},{"word":"转","pinyin":"zhuǎn","tags":[]},{"word":"纵","pinyin":"zòng","tags":[]},{"word":"阿姨","pinyin":"āyí","tags":[]},{"word":"伴随","pinyin":"bànsuí","tags":[]},{"word":"奔跑","pinyin":"bēnpǎo","tags":[]},{"word":"变法","pinyin":"biànfǎ","tags":[]},{"word":"博士","pinyin":"bóshì","tags":[]},{"word":"不时","pinyin":"bùshí","tags":[]},{"word":"灿烂","pinyin":"cànlàn","tags":[]},{"word":"超过","pinyin":"chāoguò","tags":[]},{"word":"吃力","pinyin":"chīlì","tags":[]},{"word":"除了","pinyin":"chúle","tags":[]},{"word":"磁场","pinyin":"cíchǎng","tags":[]},{"word":"大胆","pinyin":"dàdǎn","tags":[]},{"word":"代价","pinyin":"dàijià","tags":[]},{"word":"导体","pinyin":"dǎotǐ","tags":[]},{"word":"地面","pinyin":"dìmiàn","tags":[]},{"word":"淀粉","pinyin":"diànfěn","tags":[]},{"word":"读书","pinyin":"dúshū","tags":[]},{"word":"发出","pinyin":"fāchū","tags":[]},{"word":"反射","pinyin":"fǎnshè","tags":[]},{"word":"沸腾","pinyin":"fèiténg","tags":[]},{"word":"孵化","pinyin":"fūhuà","tags":[]},{"word":"干预","pinyin":"gānyù","tags":[]},{"word":"胳膊","pinyin":"gēbo","tags":[]},{"word":"公路","pinyin":"gōnglù","tags":[]},{"word":"固定","pinyin":"gùdìng","tags":[]},{"word":"光源","pinyin":"guāngyuán","tags":[]},{"word":"过于","pinyin":"guòyú","tags":[]},{"word":"合适","pinyin":"héshì","tags":[]},{"word":"互补","pinyin":"hùbǔ","tags":[]},{"word":"灰色","pinyin":"hu","tags":[]},{"word":"积极性","pinyin":"jījíxìng","tags":[]},{"word":"纪念","pinyin":"jìniàn","tags":[]},{"word":"价值","pinyin":"jiàzhí","tags":[]},{"word":"将近","pinyin":"jiāngjìn","tags":[]},{"word":"结果","pinyin":"jiéguǒ","tags":[]},{"word":"金钱","pinyin":"jīnqián","tags":[]},{"word":"精力","pinyin":"jīnglì","tags":[]},{"word":"具体","pinyin":"jùtǐ","tags":[]},{"word":"开水","pinyin":"kāishuǐ","tags":[]},{"word":"课题","pinyin":"kètí","tags":[]},{"word":"来信","pinyin":"láixìn","tags":[]},{"word":"历来","pinyin":"lìlái","tags":[]},{"word":"辽阔","pinyin":"liáokuò","tags":[]},{"word":"旅馆","pinyin":"lǚguǎn","tags":[]},{"word":"美感","pinyin":"měigǎn","tags":[]},{"word":"名义","pinyin":"míngyì","tags":[]},{"word":"难免","pinyin":"nánmiǎn","tags":[]},{"word":"农田","pinyin":"nóngtián","tags":[]},{"word":"皮肤","pinyin":"pífū","tags":[]},{"word":"破裂","pinyin":"pòliè","tags":[]},{"word":"器材","pinyin":"qìcái","tags":[]},{"word":"亲眼","pinyin":"qīnyǎn","tags":[]},{"word":"屈服","pinyin":"qūfú","tags":[]},{"word":"热心","pinyin":"rèxīn","tags":[]},{"word":"容器","pinyin":"róngqì","tags":[]},{"word":"闪光","pinyin":"shǎnguāng","tags":[]},{"word":"社会学","pinyin":"shèhuìxué","tags":[]},{"word":"生命","pinyin":"shēngmìng","tags":[]},{"word":"时刻","pinyin":"shíkè","tags":[]},{"word":"事业","pinyin":"shìyè","tags":[]},{"word":"受伤","pinyin":"shòushāng","tags":[]},{"word":"水银","pinyin":"shuǐyín","tags":[]},{"word":"虽说","pinyin":"suīshuō","tags":[]},{"word":"特别","pinyin":"tèbié","tags":[]},{"word":"天文","pinyin":"tiānwén","tags":[]},{"word":"同事","pinyin":"tóngshì","tags":[]},{"word":"推荐","pinyin":"tuījiàn","tags":[]},{"word":"往往","pinyin":"wǎngwǎng","tags":[]},{"word":"温度计","pinyin":"wēndùjì","tags":[]},{"word":"舞台","pinyin":"wǔtái","tags":[]},{"word":"下班","pinyin":"xiàbān","tags":[]},{"word":"限制","pinyin":"xiànzhì","tags":[]},{"word":"消费","pinyin":"xiāofèi","tags":[]},{"word":"心血","pinyin":"xīnxuè","tags":[]},{"word":"形式","pinyin":"xíngshì","tags":[]},{"word":"学生","pinyin":"xuésheng","tags":[]},{"word":"掩盖","pinyin":"yǎngài","tags":[]},{"word":"野外","pinyin":"yěwài","tags":[]},{"word":"依照","pinyin":"yīzhào","tags":[]},{"word":"因果","pinyin":"yīnguǒ","tags":[]},{"word":"用途","pinyin":"yòngtú","tags":[]},{"word":"愉快","pinyin":"yúkuài","tags":[]},{"word":"月份","pinyin":"yuèfèn","tags":[]},{"word":"增多","pinyin":"zēngduō","tags":[]},{"word":"照耀","pinyin":"zhàoyào","tags":[]},{"word":"正确","pinyin":"zhèngquè","tags":[]},{"word":"植株","pinyin":"zhízhū","tags":[]},{"word":"中外","pinyin":"zhōngwài","tags":[]},{"word":"资金","pinyin":"zījīn","tags":[]},{"word":"纵队","pinyin":"zòngduì","tags":[]}];
+const RAW = [{"word":"白天","pinyin":"bái·tiān","tags":["轻声"]},{"word":"报酬","pinyin":"bào·chóu","tags":["轻声"]},{"word":"报复","pinyin":"bào·fù","tags":["轻声"]},{"word":"别人","pinyin":"bié·rén","tags":["轻声"]},{"word":"玻璃","pinyin":"bō·lí","tags":["轻声"]},{"word":"差不多","pinyin":"chà·bùduō","tags":["轻声"]},{"word":"长处","pinyin":"cháng·chù","tags":["轻声"]},{"word":"诚实","pinyin":"chéng·shí","tags":["轻声"]},{"word":"出来","pinyin":"chū·lái","tags":["轻声"]},{"word":"出去","pinyin":"chū·qù","tags":["轻声"]},{"word":"刺激","pinyin":"cì·jī","tags":["轻声"]},{"word":"聪明","pinyin":"cōng·míng","tags":["轻声"]},{"word":"错误","pinyin":"cuò·wù","tags":["轻声"]},{"word":"答复","pinyin":"dá·fù","tags":["轻声"]},{"word":"道理","pinyin":"dào·lǐ","tags":["轻声"]},{"word":"底下","pinyin":"dǐ·xià","tags":["轻声"]},{"word":"懂得","pinyin":"dǒng·dé","tags":["轻声"]},{"word":"对不起","pinyin":"duì·bùqǐ","tags":["轻声"]},{"word":"分量","pinyin":"fèn·liàng","tags":["轻声"]},{"word":"夫人","pinyin":"fū·rén","tags":["轻声"]},{"word":"父亲","pinyin":"fù·qīn","tags":["轻声"]},{"word":"干净","pinyin":"gān·jing","tags":["轻声"]},{"word":"感激","pinyin":"gǎn·jī","tags":["轻声"]},{"word":"跟前","pinyin":"gēn·qián","tags":["轻声"]},{"word":"工人","pinyin":"gōng·rén","tags":["轻声"]},{"word":"公平","pinyin":"gōng·píng","tags":["轻声"]},{"word":"固执","pinyin":"gù·zhí","tags":["轻声"]},{"word":"过来","pinyin":"guò·lái","tags":["轻声"]},{"word":"好处","pinyin":"hǎo·chù","tags":["轻声"]},{"word":"喉咙","pinyin":"hóu·lóng","tags":["轻声"]},{"word":"后边","pinyin":"hòu·biān","tags":["轻声"]},{"word":"后面","pinyin":"hòu·miàn","tags":["轻声"]},{"word":"花费","pinyin":"huā·fèi","tags":["轻声"]},{"word":"回来","pinyin":"huí·lái","tags":["轻声"]},{"word":"回去","pinyin":"huí·qù","tags":["轻声"]},{"word":"活动","pinyin":"huó·dòng","tags":["轻声"]},{"word":"机会","pinyin":"jī·huì","tags":["轻声"]},{"word":"机器","pinyin":"jī·qì","tags":["轻声"]},{"word":"机器人","pinyin":"jī·qìrén","tags":["轻声"]},{"word":"记得","pinyin":"jì·dé","tags":["轻声"]},{"word":"家具","pinyin":"jiā·jù","tags":["轻声"]},{"word":"价钱","pinyin":"jià·qián","tags":["轻声"]},{"word":"讲究","pinyin":"jiǎng·jiū","tags":["轻声"]},{"word":"进来","pinyin":"jìn·lái","tags":["轻声"]},{"word":"进去","pinyin":"jìn·qù","tags":["轻声"]},{"word":"看见","pinyin":"kàn·jiàn","tags":["轻声"]},{"word":"会计","pinyin":"kuài·jì","tags":["轻声"]},{"word":"来不及","pinyin":"lái·bùjí","tags":["轻声"]},{"word":"老人家","pinyin":"lǎo·rén·jiā","tags":["轻声"]},{"word":"老鼠","pinyin":"lǎo·shǔ","tags":["轻声"]},{"word":"里边","pinyin":"lǐ·biān","tags":["轻声"]},{"word":"里面","pinyin":"lǐ·miàn","tags":["轻声"]},{"word":"力量","pinyin":"lì·liàng","tags":["轻声"]},{"word":"邻居","pinyin":"lín·jū","tags":["轻声"]},{"word":"逻辑","pinyin":"luó·jí","tags":["轻声"]},{"word":"毛病","pinyin":"máo·bìng","tags":["轻声"]},{"word":"没有","pinyin":"méi·yǒu","tags":["轻声"]},{"word":"母亲","pinyin":"mǔ·qīn","tags":["轻声"]},{"word":"哪里","pinyin":"nǎ·lǐ","tags":["轻声"]},{"word":"那里","pinyin":"nà·lǐ","tags":["轻声"]},{"word":"佩服","pinyin":"pèi·fú","tags":["轻声"]},{"word":"菩萨","pinyin":"pú·sà","tags":["轻声"]},{"word":"葡萄","pinyin":"pú·táo","tags":["轻声"]},{"word":"妻子","pinyin":"qī·zǐ","tags":["轻声"]},{"word":"起来","pinyin":"qǐ·lái","tags":["轻声"]},{"word":"气氛","pinyin":"qì·fēn","tags":["轻声"]},{"word":"前边","pinyin":"qián·biān","tags":["轻声"]},{"word":"情形","pinyin":"qíng·xíng","tags":["轻声"]},{"word":"情绪","pinyin":"qíng·xù","tags":["轻声"]},{"word":"任务","pinyin":"rèn·wù","tags":["轻声"]},{"word":"容易","pinyin":"róng·yì","tags":["轻声"]},{"word":"上边","pinyin":"shàng·biān","tags":["轻声"]},{"word":"上来","pinyin":"shàng·lái","tags":["轻声"]},{"word":"上去","pinyin":"shàng·qù","tags":["轻声"]},{"word":"舍不得","pinyin":"shě·bù·dé","tags":["轻声"]},{"word":"身份","pinyin":"shēn·fèn","tags":["轻声"]},{"word":"神气","pinyin":"shén·qì","tags":["轻声"]},{"word":"使得","pinyin":"shǐ·dé","tags":["轻声"]},{"word":"势力","pinyin":"shì·lì","tags":["轻声"]},{"word":"书记","pinyin":"shū·jì","tags":["轻声"]},{"word":"熟悉","pinyin":"shú·xī","tags":["轻声"]},{"word":"说法","pinyin":"shuō·fǎ","tags":["轻声"]},{"word":"太阳","pinyin":"tài·yáng","tags":["轻声"]},{"word":"态度","pinyin":"tài·dù","tags":["轻声"]},{"word":"外边","pinyin":"wài·biān","tags":["轻声"]},{"word":"外面","pinyin":"wài·miàn","tags":["轻声"]},{"word":"味道","pinyin":"wèi·dào","tags":["轻声"]},{"word":"西瓜","pinyin":"xī·guā","tags":["轻声"]},{"word":"下边","pinyin":"xià·biān","tags":["轻声"]},{"word":"下来","pinyin":"xià·lái","tags":["轻声"]},{"word":"下面","pinyin":"xià·miàn","tags":["轻声"]},{"word":"下去","pinyin":"xià·qù","tags":["轻声"]},{"word":"显得","pinyin":"xiǎn·dé","tags":["轻声"]},{"word":"想法","pinyin":"xiǎng·fǎ","tags":["轻声"]},{"word":"小姐","pinyin":"xiǎo·jiě","tags":["轻声"]},{"word":"小心","pinyin":"xiǎoxīn","tags":[]},{"word":"晓得","pinyin":"xiǎo·dé","tags":["轻声"]},{"word":"心里","pinyin":"xīn·lǐ","tags":["轻声"]},{"word":"新鲜","pinyin":"xīn·xiān","tags":["轻声"]},{"word":"烟囱","pinyin":"yān·cōng","tags":["轻声"]},{"word":"夜里","pinyin":"yè·lǐ","tags":["轻声"]},{"word":"已经","pinyin":"yǐ·jīng","tags":["轻声"]},{"word":"意见","pinyin":"yì·jiàn","tags":["轻声"]},{"word":"因为","pinyin":"yīn·wèi","tags":["轻声"]},{"word":"应付","pinyin":"yìng·fù","tags":["轻声"]},{"word":"用处","pinyin":"yòng·chù","tags":["轻声"]},{"word":"右边","pinyin":"yòu·biān","tags":["轻声"]},{"word":"遇见","pinyin":"yù·jiàn","tags":["轻声"]},{"word":"愿意","pinyin":"yuàn·yì","tags":["轻声"]},{"word":"早晨","pinyin":"zǎo·chén","tags":["轻声"]},{"word":"折磨","pinyin":"zhé·mó","tags":["轻声"]},{"word":"这里","pinyin":"zhè·lǐ","tags":["轻声"]},{"word":"知道","pinyin":"zhī·dào","tags":["轻声"]},{"word":"资格","pinyin":"zī·gé","tags":["轻声"]},{"word":"左边","pinyin":"zuǒ·biān","tags":["轻声"]},{"word":"把儿","pinyin":"bàr","tags":["儿化"]},{"word":"包干儿","pinyin":"bāogànr","tags":["儿化"]},{"word":"茶馆儿","pinyin":"cháguǎnr","tags":["儿化"]},{"word":"差点儿","pinyin":"chàdiǎnr","tags":["儿化"]},{"word":"大伙儿","pinyin":"dàhuǒr","tags":["儿化"]},{"word":"大婶儿","pinyin":"dàshěnr","tags":["儿化"]},{"word":"灯泡儿","pinyin":"dēngpàor","tags":["儿化"]},{"word":"儿","pinyin":"ér","tags":[]},{"word":"而","pinyin":"ér","tags":[]},{"word":"尔","pinyin":"ěr","tags":[]},{"word":"耳","pinyin":"ěr","tags":[]},{"word":"二","pinyin":"èr","tags":[]},{"word":"反而","pinyin":"fǎnér","tags":[]},{"word":"核儿","pinyin":"húr","tags":["儿化"]},{"word":"老伴儿","pinyin":"lǎobànr","tags":["儿化"]},{"word":"哪儿","pinyin":"nǎr","tags":["儿化"]},{"word":"那儿","pinyin":"nàr","tags":["儿化"]},{"word":"年头儿","pinyin":"niántóur","tags":["儿化"]},{"word":"小说儿","pinyin":"xiǎoshuōr","tags":["儿化"]},{"word":"笑话儿","pinyin":"xiàohuar","tags":["儿化"]},{"word":"一会儿","pinyin":"yīhuìr","tags":["儿化"]},{"word":"一块儿","pinyin":"yīkuàir","tags":["儿化"]},{"word":"这儿","pinyin":"zhèr","tags":["儿化"]},{"word":"螯","pinyin":"áo","tags":["难字"]},{"word":"揣","pinyin":"chuāi","tags":["难字"]},{"word":"犊","pinyin":"dú","tags":["难字"]},{"word":"戟","pinyin":"jǐ","tags":["难字"]},{"word":"揩","pinyin":"kāi","tags":["难字"]},{"word":"抡","pinyin":"lūn","tags":["难字"]},{"word":"拈","pinyin":"niān","tags":["难字"]},{"word":"瞟","pinyin":"piǎo","tags":["难字"]},{"word":"祛","pinyin":"qū","tags":["难字"]},{"word":"涮","pinyin":"shuàn","tags":["难字"]},{"word":"瓮","pinyin":"wèng","tags":["难字"]},{"word":"噎","pinyin":"yē","tags":["难字"]},{"word":"浙","pinyin":"zhè","tags":["难字"]},{"word":"谙","pinyin":"ān","tags":["难字"]},{"word":"婢","pinyin":"bì","tags":["难字"]},{"word":"跛","pinyin":"bǒ","tags":["难字"]},{"word":"阐","pinyin":"chǎn","tags":["难字"]},{"word":"怵","pinyin":"chù","tags":["难字"]},{"word":"冗","pinyin":"rǒng","tags":["难字"]},{"word":"霎","pinyin":"shà","tags":["难字"]},{"word":"悚","pinyin":"sǒng","tags":["难字"]},{"word":"誊","pinyin":"téng","tags":["难字"]},{"word":"皈","pinyin":"guī","tags":["难字"]},{"word":"涸","pinyin":"hé","tags":["难字"]},{"word":"秽","pinyin":"huì","tags":["难字"]},{"word":"汲","pinyin":"jí","tags":["难字"]},{"word":"勘","pinyin":"kān","tags":["难字"]},{"word":"翌","pinyin":"yì","tags":["难字"]},{"word":"掠","pinyin":"lüè","tags":["难字"]},{"word":"冢","pinyin":"zhǒng","tags":["难字"]},{"word":"阿","pinyin":"ā","tags":[]},{"word":"罢","pinyin":"bà","tags":[]},{"word":"薄","pinyin":"báo","tags":[]},{"word":"鼻","pinyin":"bí","tags":[]},{"word":"别","pinyin":"bié","tags":[]},{"word":"猜","pinyin":"cāi","tags":[]},{"word":"册","pinyin":"cè","tags":[]},{"word":"厂","pinyin":"chǎng","tags":[]},{"word":"成","pinyin":"chéng","tags":[]},{"word":"重","pinyin":"chóng","tags":[]},{"word":"窗","pinyin":"chuāng","tags":[]},{"word":"凑","pinyin":"còu","tags":[]},{"word":"袋","pinyin":"dài","tags":[]},{"word":"道","pinyin":"dào","tags":[]},{"word":"点","pinyin":"diǎn","tags":[]},{"word":"丢","pinyin":"diū","tags":[]},{"word":"渡","pinyin":"dù","tags":[]},{"word":"饿","pinyin":"è","tags":[]},{"word":"放","pinyin":"fàng","tags":[]},{"word":"缝","pinyin":"féng","tags":[]},{"word":"赋","pinyin":"fù","tags":[]},{"word":"稿","pinyin":"gǎo","tags":[]},{"word":"宫","pinyin":"gōng","tags":[]},{"word":"瓜","pinyin":"guā","tags":[]},{"word":"桂","pinyin":"guì","tags":[]},{"word":"行","pinyin":"háng","tags":[]},{"word":"哄","pinyin":"hōng","tags":[]},{"word":"滑","pinyin":"huá","tags":[]},{"word":"绘","pinyin":"huì","tags":[]},{"word":"即","pinyin":"jí","tags":[]},{"word":"甲","pinyin":"jiǎ","tags":[]},{"word":"件","pinyin":"jiàn","tags":[]},{"word":"角","pinyin":"jiǎo","tags":[]},{"word":"金","pinyin":"jīn","tags":[]},{"word":"景","pinyin":"jǐng","tags":[]},{"word":"具","pinyin":"jù","tags":[]},{"word":"扛","pinyin":"káng","tags":[]},{"word":"口","pinyin":"kǒu","tags":[]},{"word":"蜡","pinyin":"là","tags":[]},{"word":"离","pinyin":"lí","tags":[]},{"word":"良","pinyin":"liáng","tags":[]},{"word":"灵","pinyin":"líng","tags":[]},{"word":"拢","pinyin":"lǒng","tags":[]},{"word":"滤","pinyin":"lǜ","tags":[]},{"word":"蛮","pinyin":"mán","tags":[]},{"word":"门","pinyin":"mén","tags":[]},{"word":"明","pinyin":"míng","tags":[]},{"word":"拿","pinyin":"ná","tags":[]},{"word":"逆","pinyin":"nì","tags":[]},{"word":"欧","pinyin":"ōu","tags":[]},{"word":"配","pinyin":"pèi","tags":[]},{"word":"品","pinyin":"pǐn","tags":[]},{"word":"起","pinyin":"qǐ","tags":[]},{"word":"敲","pinyin":"qiāo","tags":[]},{"word":"求","pinyin":"qiú","tags":[]},{"word":"然","pinyin":"rán","tags":[]},{"word":"肉","pinyin":"ròu","tags":[]},{"word":"沙","pinyin":"shā","tags":[]},{"word":"蛇","pinyin":"shé","tags":[]},{"word":"省","pinyin":"shěng","tags":[]},{"word":"示","pinyin":"shì","tags":[]},{"word":"瘦","pinyin":"shòu","tags":[]},{"word":"霜","pinyin":"shuāng","tags":[]},{"word":"俗","pinyin":"sú","tags":[]},{"word":"他","pinyin":"tā","tags":[]},{"word":"塘","pinyin":"táng","tags":[]},{"word":"天","pinyin":"tiān","tags":[]},{"word":"痛","pinyin":"tòng","tags":[]},{"word":"挖","pinyin":"wā","tags":[]},{"word":"为","pinyin":"wéi","tags":[]},{"word":"吻","pinyin":"wěn","tags":[]},{"word":"吸","pinyin":"xī","tags":[]},{"word":"闲","pinyin":"xián","tags":[]},{"word":"想","pinyin":"xiǎng","tags":[]},{"word":"谢","pinyin":"xiè","tags":[]},{"word":"修","pinyin":"xiū","tags":[]},{"word":"鸭","pinyin":"yā","tags":[]},{"word":"阳","pinyin":"yáng","tags":[]},{"word":"一","pinyin":"yī","tags":[]},{"word":"亦","pinyin":"yì","tags":[]},{"word":"营","pinyin":"yíng","tags":[]},{"word":"幼","pinyin":"yòu","tags":[]},{"word":"原","pinyin":"yuán","tags":[]},{"word":"砸","pinyin":"zá","tags":[]},{"word":"增","pinyin":"zēng","tags":[]},{"word":"仗","pinyin":"zhàng","tags":[]},{"word":"挣","pinyin":"zhēng","tags":[]},{"word":"职","pinyin":"zhí","tags":[]},{"word":"转","pinyin":"zhuǎn","tags":[]},{"word":"纵","pinyin":"zòng","tags":[]},{"word":"阿姨","pinyin":"āyí","tags":[]},{"word":"伴随","pinyin":"bànsuí","tags":[]},{"word":"奔跑","pinyin":"bēnpǎo","tags":[]},{"word":"变法","pinyin":"biànfǎ","tags":[]},{"word":"博士","pinyin":"bóshì","tags":[]},{"word":"不时","pinyin":"bùshí","tags":[]},{"word":"灿烂","pinyin":"cànlàn","tags":[]},{"word":"超过","pinyin":"chāoguò","tags":[]},{"word":"吃力","pinyin":"chīlì","tags":[]},{"word":"除了","pinyin":"chúle","tags":[]},{"word":"磁场","pinyin":"cíchǎng","tags":[]},{"word":"大胆","pinyin":"dàdǎn","tags":[]},{"word":"代价","pinyin":"dàijià","tags":[]},{"word":"导体","pinyin":"dǎotǐ","tags":[]},{"word":"地面","pinyin":"dìmiàn","tags":[]},{"word":"淀粉","pinyin":"diànfěn","tags":[]},{"word":"读书","pinyin":"dúshū","tags":[]},{"word":"发出","pinyin":"fāchū","tags":[]},{"word":"反射","pinyin":"fǎnshè","tags":[]},{"word":"沸腾","pinyin":"fèiténg","tags":[]},{"word":"孵化","pinyin":"fūhuà","tags":[]},{"word":"干预","pinyin":"gānyù","tags":[]},{"word":"胳膊","pinyin":"gēbo","tags":[]},{"word":"公路","pinyin":"gōnglù","tags":[]},{"word":"固定","pinyin":"gùdìng","tags":[]},{"word":"光源","pinyin":"guāngyuán","tags":[]},{"word":"过于","pinyin":"guòyú","tags":[]},{"word":"合适","pinyin":"héshì","tags":[]},{"word":"互补","pinyin":"hùbǔ","tags":[]},{"word":"灰色","pinyin":"huīsè","tags":[]},{"word":"积极性","pinyin":"jījíxìng","tags":[]},{"word":"纪念","pinyin":"jìniàn","tags":[]},{"word":"价值","pinyin":"jiàzhí","tags":[]},{"word":"将近","pinyin":"jiāngjìn","tags":[]},{"word":"结果","pinyin":"jiéguǒ","tags":[]},{"word":"金钱","pinyin":"jīnqián","tags":[]},{"word":"精力","pinyin":"jīnglì","tags":[]},{"word":"具体","pinyin":"jùtǐ","tags":[]},{"word":"开水","pinyin":"kāishuǐ","tags":[]},{"word":"课题","pinyin":"kètí","tags":[]},{"word":"来信","pinyin":"láixìn","tags":[]},{"word":"历来","pinyin":"lìlái","tags":[]},{"word":"辽阔","pinyin":"liáokuò","tags":[]},{"word":"旅馆","pinyin":"lǚguǎn","tags":[]},{"word":"美感","pinyin":"měigǎn","tags":[]},{"word":"名义","pinyin":"míngyì","tags":[]},{"word":"难免","pinyin":"nánmiǎn","tags":[]},{"word":"农田","pinyin":"nóngtián","tags":[]},{"word":"皮肤","pinyin":"pífū","tags":[]},{"word":"破裂","pinyin":"pòliè","tags":[]},{"word":"器材","pinyin":"qìcái","tags":[]},{"word":"亲眼","pinyin":"qīnyǎn","tags":[]},{"word":"屈服","pinyin":"qūfú","tags":[]},{"word":"热心","pinyin":"rèxīn","tags":[]},{"word":"容器","pinyin":"róngqì","tags":[]},{"word":"闪光","pinyin":"shǎnguāng","tags":[]},{"word":"社会学","pinyin":"shèhuìxué","tags":[]},{"word":"生命","pinyin":"shēngmìng","tags":[]},{"word":"时刻","pinyin":"shíkè","tags":[]},{"word":"事业","pinyin":"shìyè","tags":[]},{"word":"受伤","pinyin":"shòushāng","tags":[]},{"word":"水银","pinyin":"shuǐyín","tags":[]},{"word":"虽说","pinyin":"suīshuō","tags":[]},{"word":"特别","pinyin":"tèbié","tags":[]},{"word":"天文","pinyin":"tiānwén","tags":[]},{"word":"同事","pinyin":"tóngshì","tags":[]},{"word":"推荐","pinyin":"tuījiàn","tags":[]},{"word":"往往","pinyin":"wǎngwǎng","tags":[]},{"word":"温度计","pinyin":"wēndùjì","tags":[]},{"word":"舞台","pinyin":"wǔtái","tags":[]},{"word":"下班","pinyin":"xiàbān","tags":[]},{"word":"限制","pinyin":"xiànzhì","tags":[]},{"word":"消费","pinyin":"xiāofèi","tags":[]},{"word":"心血","pinyin":"xīnxuè","tags":[]},{"word":"形式","pinyin":"xíngshì","tags":[]},{"word":"学生","pinyin":"xuésheng","tags":[]},{"word":"掩盖","pinyin":"yǎngài","tags":[]},{"word":"野外","pinyin":"yěwài","tags":[]},{"word":"依照","pinyin":"yīzhào","tags":[]},{"word":"因果","pinyin":"yīnguǒ","tags":[]},{"word":"用途","pinyin":"yòngtú","tags":[]},{"word":"愉快","pinyin":"yúkuài","tags":[]},{"word":"月份","pinyin":"yuèfèn","tags":[]},{"word":"增多","pinyin":"zēngduō","tags":[]},{"word":"照耀","pinyin":"zhàoyào","tags":[]},{"word":"正确","pinyin":"zhèngquè","tags":[]},{"word":"植株","pinyin":"zhízhū","tags":[]},{"word":"中外","pinyin":"zhōngwài","tags":[]},{"word":"资金","pinyin":"zījīn","tags":[]},{"word":"纵队","pinyin":"zòngduì","tags":[]}];
 
 // ---------- 状态 ----------
 let enterLock=false;
@@ -232,21 +244,27 @@ function writeWrongStore(obj){
 // 词典查询链接（百度汉语，字词通用）
 function dictUrl(w){ return "https://hanyu.baidu.com/s?wd="+encodeURIComponent(w); }
 
-// 外部导入词条（不覆盖内置 RAW，按 word 去重追加）
+// 外部导入词条：同名（word）会覆盖内置 RAW 的读音，未重名的追加到 EXTRA
 const EXTRA=[];
+const overridden=new Set();
 // 默认远程词库 JSON 地址：填好后打开页面会自动联网加载；留空则不自动拉取。
 // 远程文件需允许跨域（返回 Access-Control-Allow-Origin: *），否则浏览器会拦截。
 const DEFAULT_REMOTE_URL = "https://raw.githubusercontent.com/Stream-L/files-for-share/refs/heads/main/data/%E6%99%AE%E6%B5%8B%E5%A4%96%E9%83%A8%E6%98%93%E9%94%99%E8%AF%8D%E5%8C%85.json";
 const REMOTE_STORE_KEY = "pth_remote_url";
-function allWords(){ return RAW.concat(EXTRA); }
+function allWords(){
+  const base = overridden.size ? RAW.filter(x=>!overridden.has(x.word)) : RAW;
+  return base.concat(EXTRA);
+}
 
 const state = {
   mode: "py",          // py=看字写拼音, hz=看拼音写汉字
   inputMode: "spell",  // spell=拼写输入, choice=选读音
   scope: "all",
+  src: "",             // 来源筛选，空=全部
   order: "random",
   ignoreTone: false,
   wrongOnly: false,
+  autoNext: true,
   pool: [],            // 当前题目队列
   idx: 0,
   cur: null,
@@ -254,6 +272,7 @@ const state = {
   round: { total: 0, ok: 0, bad: 0 },
   wrong: new Map(Object.entries(readWrongStore()))
 };
+let autoTimer = null;
 
 // ---------- 工具：拼音归一化 / 数字调号 ----------
 const TONE_MAP = {
@@ -262,14 +281,15 @@ const TONE_MAP = {
   "ī":"i","í":"i","ǐ":"i","ì":"i",
   "ō":"o","ó":"o","ǒ":"o","ò":"o",
   "ū":"u","ú":"u","ǔ":"u","ù":"u",
-  "ǖ":"u","ǘ":"u","ǚ":"u","ǜ":"u","ü":"u"
+  "ǖ":"ü","ǘ":"ü","ǚ":"ü","ǜ":"ü","ü":"ü"
 };
+const TONE_RE = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/;
 const TONE_CHARS = {
   a:["ā","á","ǎ","à"], o:["ō","ó","ǒ","ò"], e:["ē","é","ě","è"],
   i:["ī","í","ǐ","ì"], u:["ū","ú","ǔ","ù"], ü:["ǖ","ǘ","ǚ","ǜ"]
 };
 const INITIALS = ["zh","ch","sh","b","p","m","f","d","t","n","l","g","k","h","j","q","x","r","z","c","s","y","w"];
-const FINALS = ["iang","uang","iong","ian","uan","üan","iao","uai","iou","uei","uen","ua","uo","ia","ie","üe","ang","eng","ong","ing","ai","ei","ao","ou","iu","ui","un","an","en","in","er","a","o","e","i","u","ü"];
+const FINALS = ["iang","uang","iong","ian","uan","üan","iao","uai","iou","uei","uen","ua","uo","ia","ie","üe","ue","ang","eng","ong","ing","ai","ei","ao","ou","iu","ui","un","an","en","in","er","a","o","e","i","u","ü"];
 
 function stripTone(s){
   return s.split("").map(c=>TONE_MAP[c]||c).join("");
@@ -285,21 +305,24 @@ function pickVowel(letters){
   if(has("ü")) return "ü";
   return null;
 }
-// 单个音节：字母 + 末尾声调数字（1阴平 2阳平 3上声 4去声，0/省略=轻声）
+// 单个音节：字母 + 末尾声调数字（1阴平 2阳平 3上声 4去声，0/5/省略=轻声）
 function convertToken(t){
-  const m=t.match(/^([a-zü]+?)([0-4])$/);
+  const m=t.match(/^([a-zü]+?)([0-5])$/);
   if(!m) return t;
   let letters=m[1]; const d=+m[2];
-  if(d===0) return letters;
+  if(d===0 || d===5) return letters;
   const v=pickVowel(letters);
   if(!v) return letters;
   const idx=letters.indexOf(v);
   return letters.slice(0,idx)+TONE_CHARS[v][d-1]+letters.slice(idx+1);
 }
 function normalizeInput(s){
-  let r=(s||"").toLowerCase().trim().replace(/v/g,"ü").replace(/·/g,"");
+  let r=(s||"").toLowerCase().trim().replace(/v/g,"ü").replace(/[·'’]/g,"");
+  // j/q/x/y 后的 ü 写作 u（jué 等于 jüé），必须在转调号符号之前做
+  r=r.replace(/([jqxy])ü/g,"$1u");
   return r.split(/\s+/).map(convertToken).join("");
 }
+// 判题归一化：可选忽略声调
 function norm(s, ignoreTone){
   let r=normalizeInput(s).replace(/\s+/g,"");
   if(ignoreTone) r=stripTone(r);
@@ -308,28 +331,70 @@ function norm(s, ignoreTone){
 function isCorrect(input, answer, ignoreTone){
   return norm(input, ignoreTone) === norm(answer, ignoreTone);
 }
-// 把连写拼音切成带调音节数组
+// 把连写拼音切成带调音节数组；· 与 ' 都视为音节边界
 function splitPy(py){
-  py=(py||"").replace(/[\s·]/g,"");
-  const plain=stripTone(py);
-  let out=[], i=0;
-  while(i<plain.length){
-    let ini="";
-    for(const s of INITIALS){ if(plain.startsWith(s,i)){ini=s;break;} }
-    let k=i+ini.length, fin="";
-    for(const f of FINALS){ if(plain.startsWith(f,k)){fin=f;break;} }
-    let k2 = fin ? k+fin.length : i+1;
-    out.push(py.slice(i,k2));
-    i=k2;
-  }
-  // 儿化尾 r 并入上一音节
-  if(out.length>1 && out[out.length-1]==="r"){
-    out[out.length-2]+="r"; out.pop();
+  const out=[];
+  // 空格、·、撇号都是音节硬边界：词语表里「一蹴而就」写作 yí cù ér jiù，
+  // 若不按空格切，「cùér」会被当成 cù + ué + r
+  for(const raw of (py||"").split(/[\s·'’]+/)){
+    const part=raw;
+    if(!part) continue;
+    const plain=stripTone(part);
+    let i=0; const seg=[];
+    while(i<plain.length){
+      let ini="";
+      for(const s of INITIALS){ if(plain.startsWith(s,i)){ini=s;break;} }
+      let k=i+ini.length, fin="";
+      for(const f of FINALS){
+        // 「ue」只用于 j/q/x/y 之后的 üe（jué/xué），零声母「é」不能被它吃掉
+        if(f==="ue" && !/[jqxy]$/.test(ini)) continue;
+        if(plain.startsWith(f,k)){fin=f;break;}
+      }
+      let k2 = fin ? k+fin.length : i+1;
+      seg.push(part.slice(i,k2));
+      i=k2;
+    }
+    // 儿化尾 r 并入上一音节
+    if(seg.length>1 && seg[seg.length-1]==="r"){
+      seg[seg.length-2]+="r"; seg.pop();
+    }
+    out.push(...seg);
   }
   return out;
 }
 // 展示用：把连写拼音按音节加空格
 function formatPy(py){ return splitPy(py).join(" "); }
+
+// 切成 [{txt, neutral}]：neutral = 被 · 隔开且该音节没标调（真轻声）
+function splitPyMarked(py){
+  const out=[];
+  (py||"").split("·").forEach((seg,gi)=>{
+    splitPy(seg).forEach((s,si)=>{
+      out.push({ txt:s, neutral: gi>0 && si===0 && !TONE_RE.test(s) });
+    });
+  });
+  return out;
+}
+function hasNeutral(py){ return splitPyMarked(py).some(x=>x.neutral); }
+// 轻声的音节点状下划线标出来
+function fmtPyHtml(py){
+  return splitPyMarked(py)
+    .map(x=>`<span class="syl${x.neutral?" neu":""}">${escapeHtml(x.txt)}</span>`)
+    .join(" ");
+}
+// 儿化：末音节以 r 收尾（不是 er 本身），如 bàr / xiàohuar
+function isErhuaEntry(x){
+  const syls=splitPy((x&&x.pinyin)||"");
+  const last=stripTone(syls[syls.length-1]||"");
+  return last.length>1 && last.endsWith("r") && last!=="er";
+}
+// 词条来源列表（内置没有 source 字段）
+function sourceList(x){
+  const s=(x&&x.source)||"";
+  const arr=s.split(/[；;]/).map(v=>v.trim()).filter(Boolean);
+  return arr.length?arr:["内置基础库"];
+}
+function matchesSource(x,sel){ return !sel || sourceList(x).includes(sel); }
 
 // ---------- 音近干扰项生成（普测易混对 + 组合网格，避免特征交集泄题） ----------
 // 易混声母：送气/不送气、n/l、平翘舌、f/h、j/q/x 等
@@ -441,9 +506,11 @@ function buildPool(){
   let list = allWords().slice();
   if(state.scope==="single") list = list.filter(x=>x.word.length===1);
   else if(state.scope==="multi") list = list.filter(x=>x.word.length>1);
-  else if(state.scope==="erhua") list = list.filter(x=>(x.tags||[]).includes("儿化"));
-  else if(state.scope==="qingsheng") list = list.filter(x=>(x.tags||[]).includes("轻声"));
+  else if(state.scope==="erhua") list = list.filter(isErhuaEntry);
+  else if(state.scope==="qingsheng") list = list.filter(x=>hasNeutral(x.pinyin));
   else if(state.scope==="hard") list = list.filter(x=>(x.tags||[]).includes("难字"));
+  else if(state.scope==="yicuo") list = list.filter(x=>(x.tags||[]).includes("易错"));
+  if(state.src) list = list.filter(x=>matchesSource(x,state.src));
   if(state.wrongOnly) list = list.filter(x=>state.wrong.has(x.word));
   if(state.order==="random"){
     for(let i=list.length-1;i>0;i--){
@@ -456,6 +523,7 @@ function buildPool(){
 }
 
 function nextQuestion(){
+  if(autoTimer){ clearTimeout(autoTimer); autoTimer=null; }
   if(state.idx >= state.pool.length){
     // 只练错题：未掌握的错题继续循环，直到全部移出
     if(state.wrongOnly && state.wrong.size>0) buildPool();
@@ -539,8 +607,8 @@ function selectChoice(btn){
 function finish(ok, userInput){
   const c=state.cur;
   const answer=state.mode==="py"?c.pinyin:c.word;
-  const dispAns=state.mode==="py"?formatPy(answer):answer;
-  const dispStem=state.mode==="py"?c.word:formatPy(c.pinyin);
+  const dispAns=state.mode==="py"?fmtPyHtml(answer):escapeHtml(answer);
+  const dispStem=state.mode==="py"?escapeHtml(c.word):fmtPyHtml(c.pinyin);
   state.answered=true;
   state.round.total++;
   const fb=document.getElementById("feedback");
@@ -562,9 +630,11 @@ function finish(ok, userInput){
     state.round.bad++;
     state.wrong.set(c.word,0);
     fb.className="feedback show bad";
+    const hint=state.mode==="py"?neutralHint(userInput, answer):"";
     fb.innerHTML=`<div class="fb-title">回答错误</div>
       <div class="fb-line">你的答案：<b>${escapeHtml(userInput)}</b></div>
-      <div class="fb-line">正确答案：<b>${dispAns}</b></div>`;
+      <div class="fb-line">正确答案：<b>${dispAns}</b></div>
+      ${hint?`<div class="fb-line" style="opacity:.8">${hint}</div>`:""}`;
   }
   fb.insertAdjacentHTML("beforeend",
     `<div class="fb-line"><a class="dict-link" target="_blank" rel="noopener" href="${dictUrl(c.word)}">查词典：${escapeHtml(c.word)}（读音 · 释义）</a></div>`);
@@ -572,19 +642,39 @@ function finish(ok, userInput){
   document.getElementById("nextRow").style.display="flex";
   document.getElementById("nextBtn").focus();
   renderStats(); renderWrong();
+  if(ok && state.autoNext){
+    autoTimer=setTimeout(()=>{ autoTimer=null; nextQuestion(); },700);
+  }
+}
+
+// 答错但只是因为轻声音节标了声调时，给一句针对性提示
+function neutralHint(userInput, answer){
+  const a=splitPyMarked(answer);
+  const u=splitPy(normalizeInput(userInput||""));
+  if(!a.length || a.length!==u.length) return "";
+  for(let i=0;i<a.length;i++){
+    if(a[i].neutral && stripTone(u[i])===stripTone(a[i].txt))
+      return `提示：第 ${i+1} 个音节读轻声，不标调，写成 ${escapeHtml(a[i].txt)}`;
+  }
+  return "";
 }
 
 function renderStem(){
   const c=state.cur;
   const tag=document.getElementById("stemTag");
   const stem=document.getElementById("stem");
+  const bits=[ state.mode==="py"?"看字写拼音":"看拼音写汉字" ];
+  bits.push(`第 ${state.idx}/${state.pool.length} 题`);
+  if((c.tags||[]).length) bits.push(c.tags.join("／"));
+  if(c.source) bits.push(c.source.split(/[；;]/)[0]);
+  tag.textContent = bits.join(" · ");
+  const ans=document.getElementById("answer");
+  if(ans) ans.placeholder = state.mode==="py" ? "输入拼音，如 gan1 jing；轻声不标调" : "输入汉字，回车提交";
   if(state.mode==="py"){
-    tag.textContent = "看字写拼音";
     stem.textContent = c.word;
-    stem.classList.add("pinyin");
+    stem.classList.remove("pinyin");
   }else{
-    tag.textContent = "看拼音写汉字";
-    stem.textContent = formatPy(c.pinyin);
+    stem.innerHTML = fmtPyHtml(c.pinyin);
     stem.classList.add("pinyin");
   }
 }
@@ -668,6 +758,15 @@ const wrongOnlyEl=document.getElementById("wrongOnly");
 wrongOnlyEl.onchange=()=>{state.wrongOnly=wrongOnlyEl.checked;buildPool();nextQuestion();};
 const ignoreToneEl=document.getElementById("ignoreTone");
 ignoreToneEl.onchange=()=>{state.ignoreTone=ignoreToneEl.checked;};
+const autoNextEl=document.getElementById("autoNext");
+autoNextEl.onchange=()=>{
+  state.autoNext=autoNextEl.checked;
+  if(!state.autoNext && autoTimer){ clearTimeout(autoTimer); autoTimer=null; }
+};
+document.getElementById("srcSel").onchange=(e)=>{
+  state.src=e.target.value;
+  buildPool(); nextQuestion();
+};
 document.getElementById("submitBtn").onclick=submit;
 document.getElementById("nextBtn").onclick=()=>{state.round;nextQuestion();};
 document.getElementById("wrongToggleBtn").onclick=()=>{
@@ -687,22 +786,63 @@ wrongModal.addEventListener("click",e=>{ if(e.target===wrongModal) closeWrong();
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeWrong(); });
 
 // ---------- 导入外部词库 JSON ----------
+// 校验并规范化一条词条，返回 {ok, entry, reason}
+function checkEntry(it){
+  if(!it || typeof it.word!=="string" || typeof it.pinyin!=="string") return {ok:false, reason:"字段缺失"};
+  const word=it.word.trim(), pinyin=it.pinyin.trim();
+  if(!word || !pinyin) return {ok:false, reason:"字段为空"};
+  if(/[0-9]/.test(pinyin)) return {ok:false, reason:"拼音含数字调号"};
+  const syls=splitPy(pinyin);
+  const plain=pinyin.replace(/[\s·'’]/g,"");
+  if(!syls.length || syls.join("")!==plain) return {ok:false, reason:"拼音无法切分"};
+  if(!syls.every(isValidPySyl)) return {ok:false, reason:"存在非法音节"};
+  const erhua=isErhuaEntry({word,pinyin});
+  const expect=erhua?word.length-1:word.length;
+  if(syls.length!==expect) return {ok:false, reason:`音节数 ${syls.length} ≠ 字数 ${expect}`};
+  const tags=Array.isArray(it.tags)?it.tags.map(t=>String(t).trim()).filter(Boolean):[];
+  const source=typeof it.source==="string"?it.source.trim():"";
+  return {ok:true, entry:{word, pinyin, tags, source}};
+}
+
 function importWords(arr){
   if(!Array.isArray(arr)){ throw new Error("JSON 顶层应为词条数组"); }
-  const known=new Set(allWords().map(x=>x.word));
-  let added=0, skipped=0;
+  let added=0, replaced=0;
+  const bad=[];
   for(const it of arr){
-    if(!it || typeof it.word!=="string" || !it.word.trim() || typeof it.pinyin!=="string" || !it.pinyin.trim()){ skipped++; continue; }
-    const word=it.word.trim(), py=it.pinyin.trim();
-    if(known.has(word)){ skipped++; continue; }
-    known.add(word);
-    EXTRA.push({ word, pinyin:py, tags:Array.isArray(it.tags)?it.tags:[], source:it.source||"" });
-    added++;
+    const res=checkEntry(it);
+    if(!res.ok){ if(bad.length<20) bad.push(`${(it&&it.word)||"?"}（${(it&&it.pinyin)||"?"}）：${res.reason}`); continue; }
+    const e=res.entry;
+    const idx=EXTRA.findIndex(x=>x.word===e.word);
+    if(idx>=0){ EXTRA[idx]=e; replaced++; continue; }
+    if(RAW.some(x=>x.word===e.word)){ overridden.add(e.word); EXTRA.push(e); replaced++; continue; }
+    EXTRA.push(e); added++;
   }
   const info=document.getElementById("importInfo");
-  info.textContent=`已导入 ${added} 条${skipped?`，跳过重复/无效 ${skipped} 条`:""}；当前共 ${allWords().length} 条`;
-  buildPool(); nextQuestion(); renderStats();
-  return added;
+  info.textContent=`新增 ${added} 条，覆盖 ${replaced} 条${bad.length?`，跳过无效 ${bad.length} 条（见控制台）`:""}`;
+  if(bad.length) console.warn("[词库] 以下词条未导入：", bad);
+  buildPool(); nextQuestion(); renderStats(); refreshLibMeta(); refreshSrcOptions();
+  return {added, replaced, bad};
+}
+
+// 题库规模提示
+function refreshLibMeta(){
+  const el=document.getElementById("libMeta");
+  if(!el) return;
+  const total=allWords().length;
+  const builtin=RAW.length-overridden.size;
+  el.textContent=`内置 ${builtin} · 外部 ${EXTRA.length} · 合计 ${total} 条`;
+}
+// 「来源」下拉：从当前词库实际来源生成
+function refreshSrcOptions(){
+  const sel=document.getElementById("srcSel");
+  if(!sel) return;
+  const cur=sel.value;
+  const set=new Set(["内置基础库"]);
+  allWords().forEach(x=>{ if(x.source) sourceList(x).forEach(s=>set.add(s)); });
+  const opts=[...set].sort((a,b)=>a.localeCompare(b,"zh"));
+  sel.innerHTML='<option value="">全部来源</option>'+
+    opts.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  if(cur && opts.includes(cur)) sel.value=cur;
 }
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("importFile").onchange=(e)=>{
@@ -736,11 +876,11 @@ async function loadRemote(url, save){
     if(!resp.ok) throw new Error("HTTP "+resp.status);
     const data=await resp.json();
     const arr=extractArr(data);
-    const added=importWords(arr);
+    const res=importWords(arr);
     if(save!==false){
       try{ localStorage.setItem(REMOTE_STORE_KEY, url); }catch(_){}
     }
-    setInfo(`联网词库已加载（新增 ${added} 条）`);
+    setInfo(`联网词库已加载：新增 ${res.added}，覆盖 ${res.replaced}${res.bad.length?`，无效 ${res.bad.length}`:""}`);
   }catch(err){
     setInfo("联网加载失败："+err.message+"（检查网址，或远程未开放跨域 CORS）");
   }
@@ -776,7 +916,7 @@ document.addEventListener("keydown",e=>{
 });
 
 // ---------- 启动 ----------
-buildPool(); nextQuestion(); renderStats(); renderWrong();
+buildPool(); nextQuestion(); renderStats(); renderWrong(); refreshLibMeta(); refreshSrcOptions();
 // 回填上次使用的远程网址；有默认/已存地址则自动联网加载（失败不影响内置题库）
 (function initRemote(){
   let saved="";
