@@ -13,6 +13,10 @@ links:
     description: semanticscholar api测试，key用cookie测试，经常测试防止失效
     website: /semantic-scholar-api-test.html
     image: https://www.svgrepo.com/show/447405/images-alt2.svg
+  - title: 普通话水平测试拼音刷题小工具
+    description: 普通话水平测试拼音刷题小工具，自带刷题题库
+    website: /PinyinDrill.html
+    image: https://www.svgrepo.com/show/447405/images-alt2.svg
   - title: 图片重命名下载
     description: 用Markdown整理在线图片后，可以用这个工具对下载后的图片根据md文件快速重命名
     website: /rename_images_tool.html
