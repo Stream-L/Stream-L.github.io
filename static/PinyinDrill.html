@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>普测拼音刷题 · 键盘练习原型</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1f2933; --sub:#64727f; --line:#e2e8ee;
+    --brand:#2563a8; --brand-soft:#e8f1fa; --ok:#1e8a5a; --ok-soft:#e6f4ec;
+    --bad:#c63b3b; --bad-soft:#fbecec; --warn:#9a6a17;
+    --radius:14px; --shadow:0 1px 3px rgba(20,40,60,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+  header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  header.top h1{font-size:20px;font-weight:700}
+  header.top .meta{font-size:13px;color:var(--sub)}
+
+  /* 控制条 */
+  .controls{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:14px 16px;margin-bottom:16px;display:grid;gap:12px}
+  .ctl-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .ctl-row .label{font-size:13px;color:var(--sub);min-width:64px}
+  .seg{display:inline-flex;background:#eef2f5;border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+  .seg button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:13px;
+    color:var(--sub);cursor:pointer;white-space:nowrap}
+  .seg button.on{background:var(--card);color:var(--brand);font-weight:600;box-shadow:var(--shadow)}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);cursor:pointer;user-select:none}
+  .chk input{accent-color:var(--brand)}
+
+  /* 主卡片 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:26px 22px}
+  .stem-tag{font-size:12px;color:var(--sub);letter-spacing:.05em;margin-bottom:10px}
+  .stem{font-size:38px;font-weight:700;text-align:center;letter-spacing:.04em;margin:10px 0 22px;
+    word-break:break-word;min-height:48px}
+  .stem.pinyin{font-size:30px;letter-spacing:.06em}
+  .answer-row{display:flex;gap:10px;flex-wrap:wrap}
+  .answer-row input{flex:1;min-width:180px;font-size:20px;padding:12px 14px;border:1.5px solid var(--line);
+    border-radius:10px;outline:none;font-family:inherit}
+  .answer-row input:focus{border-color:var(--brand)}
+  .choice-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .choice-btn{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:14px 12px;
+    font-size:19px;cursor:pointer;font-family:inherit;color:var(--ink);letter-spacing:.03em}
+  .choice-btn:hover{border-color:var(--brand)}
+  .choice-btn.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:600}
+  .choice-btn.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+  .choice-btn:disabled{cursor:default}
+  .btn{border:0;border-radius:10px;padding:12px 18px;font-size:15px;cursor:pointer;font-family:inherit}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.ghost{background:#eef2f5;color:var(--ink)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  .feedback{margin-top:18px;border-radius:12px;padding:14px 16px;display:none}
+  .feedback.show{display:block}
+  .feedback.ok{background:var(--ok-soft);color:var(--ok)}
+  .feedback.bad{background:var(--bad-soft);color:var(--bad)}
+  .feedback .fb-title{font-weight:700;font-size:15px;margin-bottom:6px}
+  .feedback .fb-line{font-size:14px;margin-top:4px}
+  .feedback .fb-line b{font-weight:600}
+  .next-row{margin-top:16px;display:flex;justify-content:flex-end;gap:10px}
+
+  /* 统计 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .stat .num{font-size:22px;font-weight:700}
+  .stat .cap{font-size:12px;color:var(--sub);margin-top:2px}
+
+  /* 错题本弹窗 */
+  .modal-mask{position:fixed;inset:0;background:rgba(20,35,50,.42);display:none;
+    align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:40}
+  .modal-mask.show{display:flex}
+  .modal-panel{background:var(--card);border-radius:var(--radius);box-shadow:0 12px 36px rgba(20,40,60,.22);
+    width:100%;max-width:560px;max-height:76vh;display:flex;flex-direction:column}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:16px 18px;border-bottom:1px solid var(--line)}
+  .modal-head h2{font-size:15px;display:flex;align-items:baseline;gap:8px}
+  .modal-head .modal-actions{display:flex;gap:8px;align-items:center}
+  .modal-head button{border:0;background:#eef2f5;border-radius:8px;padding:6px 12px;font-size:13px;
+    cursor:pointer;color:var(--ink);font-family:inherit}
+  .modal-head button.close{font-size:16px;padding:4px 10px}
+  .wrong-list{display:flex;flex-wrap:wrap;gap:8px;padding:16px 18px;overflow:auto}
+  .wrong-item{border-radius:8px;padding:6px 10px;font-size:13px;
+    display:inline-flex;gap:8px;align-items:center;border:1px solid transparent}
+  .wrong-item.lv0{background:var(--bad-soft);color:var(--bad)}
+  .wrong-item.lv1{background:#fdeceb;color:var(--bad);border-color:#f3c0c0}
+  .wrong-item.lv2{background:#fdf3dd;color:var(--warn);border-color:#f0d9a8}
+  .wrong-item .py{opacity:.7}
+  .wrong-item .dots{display:inline-flex;gap:3px}
+  .wrong-item .dots i{width:6px;height:6px;border-radius:50%;background:rgba(120,120,120,.25)}
+  .wrong-item .dots i.on{background:currentColor}
+  .wrong-item button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:13px}
+  .wrong-item a.dict-link{color:var(--brand);text-decoration:none;font-size:12px}
+  .wrong-item a.dict-link:hover{text-decoration:underline}
+  .feedback a.dict-link{color:inherit;text-decoration:underline}
+  .empty{color:var(--sub);font-size:13px}
+  .hint{font-size:12px;color:var(--sub);margin-top:14px;line-height:1.7}
+  kbd{background:#eef2f5;border-radius:5px;padding:1px 6px;font-size:12px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>普测拼音刷题</h1>
+    <span class="meta">纯键盘练习 · 不录音 · 内联基础示例 348 条，可联网加载 / 导入词库</span>
+  </header>
+
+  <!-- 控制条 -->
+  <section class="controls">
+    <div class="ctl-row">
+      <span class="label">题型</span>
+      <div class="seg" id="modeSeg">
+        <button data-mode="py" class="on">看字写拼音</button>
+        <button data-mode="hz">看拼音写汉字</button>
+      </div>
+    </div>
+    <div class="ctl-row">
+      <span class="label">方式</span>
+      <div class="seg" id="inputSeg">
+        <button data-input="spell" class="on">拼写输入</button>
+        <button data-input="choice">选读音</button>
+      </div>
+    </div>
+    <div class="ctl-row">
+      <span class="label">范围</span>
+      <div class="seg" id="scopeSeg">
+        <button data-scope="all" class="on">全部</button>
+        <button data-scope="single">单字</button>
+        <button data-scope="multi">多字</button>
+        <button data-scope="erhua">儿化</button>
+        <button data-scope="qingsheng">轻声</button>
+        <button data-scope="hard">难字生僻</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="wrongOnly"> 只练错题</label>
+      <label class="chk"><input type="checkbox" id="ignoreTone"> 忽略声调判题</label>
+    </div>
+    <div class="ctl-row">
+      <span class="label">顺序</span>
+      <div class="seg" id="orderSeg">
+        <button data-order="random" class="on">随机</button>
+        <button data-order="seq">顺序</button>
+      </div>
+      <button class="btn ghost" id="importBtn" style="padding:6px 12px;font-size:13px">本地 JSON</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      <input id="remoteUrl" type="text" autocomplete="off" spellcheck="false"
+             placeholder="词库 JSON 网址（留空用默认）"
+             style="padding:6px 10px;font-size:13px;width:230px;border:1px solid var(--line);border-radius:8px;background:var(--card)">
+      <button class="btn ghost" id="remoteBtn" style="padding:6px 12px;font-size:13px">从网址加载</button>
+      <button class="btn ghost" id="openWrongBtn" style="padding:6px 12px;font-size:13px">错题本 <span id="wrongCountBtn">0</span></button>
+      <span class="meta" id="importInfo"></span>
+    </div>
+  </section>
+
+  <!-- 统计 -->
+  <section class="stats">
+    <div class="stat"><div class="num" id="stTotal">0</div><div class="cap">本轮已答</div></div>
+    <div class="stat"><div class="num" id="stOk" style="color:var(--ok)">0</div><div class="cap">答对</div></div>
+    <div class="stat"><div class="num" id="stBad" style="color:var(--bad)">0</div><div class="cap">答错</div></div>
+    <div class="stat"><div class="num" id="stRate">–</div><div class="cap">正确率</div></div>
+  </section>
+
+  <!-- 主卡片 -->
+  <section class="card">
+    <div class="stem-tag" id="stemTag">题目</div>
+    <div class="stem" id="stem">加载中…</div>
+    <div class="answer-row">
+      <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="如 huo3 che1，回车提交">
+      <button class="btn primary" id="submitBtn">提交</button>
+    </div>
+    <div class="choice-row" id="choiceRow" style="display:none"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="next-row" id="nextRow" style="display:none">
+      <button class="btn ghost" id="wrongToggleBtn">移出错题本</button>
+      <button class="btn primary" id="nextBtn">下一题 ↵</button>
+    </div>
+  </section>
+
+  <!-- 错题本弹窗 -->
+  <div class="modal-mask" id="wrongModal">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-label="错题本">
+      <div class="modal-head">
+        <h2>错题本 <span class="meta" id="wrongCount"></span></h2>
+        <div class="modal-actions">
+          <button id="clearWrongBtn">清空错题</button>
+          <button class="close" id="closeWrongBtn" title="关闭">×</button>
+        </div>
+      </div>
+      <div class="wrong-list" id="wrongList"></div>
+    </div>
+  </div>
+
+  <p class="hint">
+    操作：<kbd>回车</kbd> 提交 / 下一题；判题忽略空格与大小写，输入 <kbd>v</kbd> 等价于 <kbd>ü</kbd>。
+    「选读音」模式不用拼全拼，点选项或按 <kbd>1</kbd>–<kbd>4</kbd> 选择即可，适合专攻难字认读音。
+    拼音可用数字标调：音节后加 <kbd>1</kbd>阴平 <kbd>2</kbd>阳平 <kbd>3</kbd>上声 <kbd>4</kbd>去声，轻声不标，如 <code>zhu4 yin1</code>；也可直接打带调字母。
+    注意：当前主库的轻声标注尚不完整，轻声题以后续补齐的官方轻声表为准；本原型先练声母、韵母、声调与儿化。
+    词库可「本地 JSON」导入，也可填「词库 JSON 网址」联网加载；把地址填进代码里的 <code>DEFAULT_REMOTE_URL</code> 即可打开页面自动拉取。远程文件需开放跨域（CORS，返回 <code>Access-Control-Allow-Origin: *</code>），否则浏览器会拦截。
+    错题本由顶部「错题本」按钮打开；错题需连续答对三次才移出（红 → 橙红 → 黄 → 消失），中途答错回到红色。
+  </p>
+</div>
+
+<script>
+const RAW = [{"word":"白天","pinyin":"bái·tiān","tags":["轻声"]},{"word":"报酬","pinyin":"bào·chóu","tags":["轻声"]},{"word":"报复","pinyin":"bào·fù","tags":["轻声"]},{"word":"别人","pinyin":"bié·rén","tags":["轻声"]},{"word":"玻璃","pinyin":"bō·lí","tags":["轻声"]},{"word":"差不多","pinyin":"chà·bùduō","tags":["轻声"]},{"word":"长处","pinyin":"cháng·chù","tags":["轻声"]},{"word":"诚实","pinyin":"chéng·shí","tags":["轻声"]},{"word":"出来","pinyin":"chū·lái","tags":["轻声"]},{"word":"出去","pinyin":"chū·qù","tags":["轻声"]},{"word":"刺激","pinyin":"cì·jī","tags":["轻声"]},{"word":"聪明","pinyin":"cōng·míng","tags":["轻声"]},{"word":"错误","pinyin":"cuò·wù","tags":["轻声"]},{"word":"答复","pinyin":"dá·fù","tags":["轻声"]},{"word":"道理","pinyin":"dào·lǐ","tags":["轻声"]},{"word":"底下","pinyin":"dǐ·xià","tags":["轻声"]},{"word":"懂得","pinyin":"dǒng·dé","tags":["轻声"]},{"word":"对不起","pinyin":"duì·bùqǐ","tags":["轻声"]},{"word":"分量","pinyin":"fèn·liàng","tags":["轻声"]},{"word":"夫人","pinyin":"fū·rén","tags":["轻声"]},{"word":"父亲","pinyin":"fù·qīn","tags":["轻声"]},{"word":"干净","pinyin":"gān·jing","tags":["轻声"]},{"word":"感激","pinyin":"gǎn·jī","tags":["轻声"]},{"word":"跟前","pinyin":"gēn·qián","tags":["轻声"]},{"word":"工人","pinyin":"gōng·rén","tags":["轻声"]},{"word":"公平","pinyin":"gōng·píng","tags":["轻声"]},{"word":"固执","pinyin":"gù·zhí","tags":["轻声"]},{"word":"过来","pinyin":"guò·lái","tags":["轻声"]},{"word":"好处","pinyin":"hǎo·chù","tags":["轻声"]},{"word":"喉咙","pinyin":"hóu·lóng","tags":["轻声"]},{"word":"后边","pinyin":"hòu·biān","tags":["轻声"]},{"word":"后面","pinyin":"hòu·miàn","tags":["轻声"]},{"word":"花费","pinyin":"huā·fèi","tags":["轻声"]},{"word":"回来","pinyin":"huí·lái","tags":["轻声"]},{"word":"回去","pinyin":"huí·qù","tags":["轻声"]},{"word":"活动","pinyin":"huó·dòng","tags":["轻声"]},{"word":"机会","pinyin":"jī·huì","tags":["轻声"]},{"word":"机器","pinyin":"jī·qì","tags":["轻声"]},{"word":"机器人","pinyin":"jī·qìrén","tags":["轻声"]},{"word":"记得","pinyin":"jì·dé","tags":["轻声"]},{"word":"家具","pinyin":"jiā·jù","tags":["轻声"]},{"word":"价钱","pinyin":"jià·qián","tags":["轻声"]},{"word":"讲究","pinyin":"jiǎng·jiū","tags":["轻声"]},{"word":"进来","pinyin":"jìn·lái","tags":["轻声"]},{"word":"进去","pinyin":"jìn·qù","tags":["轻声"]},{"word":"看见","pinyin":"kàn·jiàn","tags":["轻声"]},{"word":"会计","pinyin":"kuài·jì","tags":["轻声"]},{"word":"来不及","pinyin":"lái·bùjí","tags":["轻声"]},{"word":"老人家","pinyin":"lǎo·rén·jiā","tags":["轻声"]},{"word":"老鼠","pinyin":"lǎo·shǔ","tags":["轻声"]},{"word":"里边","pinyin":"lǐ·biān","tags":["轻声"]},{"word":"里面","pinyin":"lǐ·miàn","tags":["轻声"]},{"word":"力量","pinyin":"lì·liàng","tags":["轻声"]},{"word":"邻居","pinyin":"lín·jū","tags":["轻声"]},{"word":"逻辑","pinyin":"luó·jí","tags":["轻声"]},{"word":"毛病","pinyin":"máo·bìng","tags":["轻声"]},{"word":"没有","pinyin":"méi·yǒu","tags":["轻声"]},{"word":"母亲","pinyin":"mǔ·qīn","tags":["轻声"]},{"word":"哪里","pinyin":"nǎ·lǐ","tags":["轻声"]},{"word":"那里","pinyin":"nà·lǐ","tags":["轻声"]},{"word":"佩服","pinyin":"pèi·fú","tags":["轻声"]},{"word":"菩萨","pinyin":"pú·sà","tags":["轻声"]},{"word":"葡萄","pinyin":"pú·táo","tags":["轻声"]},{"word":"妻子","pinyin":"qī·zǐ","tags":["轻声"]},{"word":"起来","pinyin":"qǐ·lái","tags":["轻声"]},{"word":"气氛","pinyin":"qì·fēn","tags":["轻声"]},{"word":"前边","pinyin":"qián·biān","tags":["轻声"]},{"word":"情形","pinyin":"qíng·xíng","tags":["轻声"]},{"word":"情绪","pinyin":"qíng·xù","tags":["轻声"]},{"word":"任务","pinyin":"rèn·wù","tags":["轻声"]},{"word":"容易","pinyin":"róng·yì","tags":["轻声"]},{"word":"上边","pinyin":"shàng·biān","tags":["轻声"]},{"word":"上来","pinyin":"shàng·lái","tags":["轻声"]},{"word":"上去","pinyin":"shàng·qù","tags":["轻声"]},{"word":"舍不得","pinyin":"shě·bù·dé","tags":["轻声"]},{"word":"身份","pinyin":"shēn·fèn","tags":["轻声"]},{"word":"神气","pinyin":"shén·qì","tags":["轻声"]},{"word":"使得","pinyin":"shǐ·dé","tags":["轻声"]},{"word":"势力","pinyin":"shì·lì","tags":["轻声"]},{"word":"书记","pinyin":"shū·jì","tags":["轻声"]},{"word":"熟悉","pinyin":"shú·xī","tags":["轻声"]},{"word":"说法","pinyin":"shuō·fǎ","tags":["轻声"]},{"word":"太阳","pinyin":"tài·yáng","tags":["轻声"]},{"word":"态度","pinyin":"tài·dù","tags":["轻声"]},{"word":"外边","pinyin":"wài·biān","tags":["轻声"]},{"word":"外面","pinyin":"wài·miàn","tags":["轻声"]},{"word":"味道","pinyin":"wèi·dào","tags":["轻声"]},{"word":"西瓜","pinyin":"xī·guā","tags":["轻声"]},{"word":"下边","pinyin":"xià·biān","tags":["轻声"]},{"word":"下来","pinyin":"xià·lái","tags":["轻声"]},{"word":"下面","pinyin":"xià·miàn","tags":["轻声"]},{"word":"下去","pinyin":"xià·qù","tags":["轻声"]},{"word":"显得","pinyin":"xiǎn·dé","tags":["轻声"]},{"word":"想法","pinyin":"xiǎng·fǎ","tags":["轻声"]},{"word":"小姐","pinyin":"xiǎo·jiě","tags":["轻声"]},{"word":"小心","pinyin":"xiǎo·x","tags":["轻声"]},{"word":"晓得","pinyin":"xiǎo·dé","tags":["轻声"]},{"word":"心里","pinyin":"xīn·lǐ","tags":["轻声"]},{"word":"新鲜","pinyin":"xīn·xiān","tags":["轻声"]},{"word":"烟囱","pinyin":"yān·cōng","tags":["轻声"]},{"word":"夜里","pinyin":"yè·lǐ","tags":["轻声"]},{"word":"已经","pinyin":"yǐ·jīng","tags":["轻声"]},{"word":"意见","pinyin":"yì·jiàn","tags":["轻声"]},{"word":"因为","pinyin":"yīn·wèi","tags":["轻声"]},{"word":"应付","pinyin":"yìng·fù","tags":["轻声"]},{"word":"用处","pinyin":"yòng·chù","tags":["轻声"]},{"word":"右边","pinyin":"yòu·biān","tags":["轻声"]},{"word":"遇见","pinyin":"yù·jiàn","tags":["轻声"]},{"word":"愿意","pinyin":"yuàn·yì","tags":["轻声"]},{"word":"早晨","pinyin":"zǎo·chén","tags":["轻声"]},{"word":"折磨","pinyin":"zhé·mó","tags":["轻声"]},{"word":"这里","pinyin":"zhè·lǐ","tags":["轻声"]},{"word":"知道","pinyin":"zhī·dào","tags":["轻声"]},{"word":"资格","pinyin":"zī·gé","tags":["轻声"]},{"word":"左边","pinyin":"zuǒ·biān","tags":["轻声"]},{"word":"把儿","pinyin":"bàr","tags":["儿化"]},{"word":"包干儿","pinyin":"bāogànr","tags":["儿化"]},{"word":"茶馆儿","pinyin":"cháguǎnr","tags":["儿化"]},{"word":"差点儿","pinyin":"chàdiǎnr","tags":["儿化"]},{"word":"大伙儿","pinyin":"dàhuǒr","tags":["儿化"]},{"word":"大婶儿","pinyin":"dàshěnr","tags":["儿化"]},{"word":"灯泡儿","pinyin":"dēngpàor","tags":["儿化"]},{"word":"儿","pinyin":"ér","tags":["儿化"]},{"word":"而","pinyin":"ér","tags":["儿化"]},{"word":"尔","pinyin":"ěr","tags":["儿化"]},{"word":"耳","pinyin":"ěr","tags":["儿化"]},{"word":"二","pinyin":"èr","tags":["儿化"]},{"word":"反而","pinyin":"fǎnér","tags":["儿化"]},{"word":"核儿","pinyin":"húr","tags":["儿化"]},{"word":"老伴儿","pinyin":"lǎobànr","tags":["儿化"]},{"word":"哪儿","pinyin":"nǎr","tags":["儿化"]},{"word":"那儿","pinyin":"nàr","tags":["儿化"]},{"word":"年头儿","pinyin":"niántóur","tags":["儿化"]},{"word":"小说儿","pinyin":"xiǎoshuōr","tags":["儿化"]},{"word":"笑话儿","pinyin":"xiàohuar","tags":["儿化"]},{"word":"一会儿","pinyin":"yīhuìr","tags":["儿化"]},{"word":"一块儿","pinyin":"yīkuàir","tags":["儿化"]},{"word":"这儿","pinyin":"zhèr","tags":["儿化"]},{"word":"螯","pinyin":"áo","tags":["难字"]},{"word":"揣","pinyin":"chuāi","tags":["难字"]},{"word":"犊","pinyin":"dú","tags":["难字"]},{"word":"戟","pinyin":"jǐ","tags":["难字"]},{"word":"揩","pinyin":"kāi","tags":["难字"]},{"word":"抡","pinyin":"lūn","tags":["难字"]},{"word":"拈","pinyin":"niān","tags":["难字"]},{"word":"瞟","pinyin":"piǎo","tags":["难字"]},{"word":"祛","pinyin":"qū","tags":["难字"]},{"word":"涮","pinyin":"shuàn","tags":["难字"]},{"word":"瓮","pinyin":"wèng","tags":["难字"]},{"word":"噎","pinyin":"yē","tags":["难字"]},{"word":"浙","pinyin":"zhè","tags":["难字"]},{"word":"谙","pinyin":"ān","tags":["难字"]},{"word":"婢","pinyin":"bì","tags":["难字"]},{"word":"跛","pinyin":"bǒ","tags":["难字"]},{"word":"阐","pinyin":"chǎn","tags":["难字"]},{"word":"怵","pinyin":"chù","tags":["难字"]},{"word":"冗","pinyin":"rǒng","tags":["难字"]},{"word":"霎","pinyin":"shà","tags":["难字"]},{"word":"悚","pinyin":"sǒng","tags":["难字"]},{"word":"誊","pinyin":"téng","tags":["难字"]},{"word":"皈","pinyin":"guī","tags":["难字"]},{"word":"涸","pinyin":"hé","tags":["难字"]},{"word":"秽","pinyin":"huì","tags":["难字"]},{"word":"汲","pinyin":"jí","tags":["难字"]},{"word":"勘","pinyin":"kān","tags":["难字"]},{"word":"翌","pinyin":"yì","tags":["难字"]},{"word":"掠","pinyin":"lüè","tags":["难字"]},{"word":"冢","pinyin":"zhǒng","tags":["难字"]},{"word":"阿","pinyin":"ā","tags":[]},{"word":"罢","pinyin":"bà","tags":[]},{"word":"薄","pinyin":"báo","tags":[]},{"word":"鼻","pinyin":"bí","tags":[]},{"word":"别","pinyin":"bié","tags":[]},{"word":"猜","pinyin":"cāi","tags":[]},{"word":"册","pinyin":"cè","tags":[]},{"word":"厂","pinyin":"chǎng","tags":[]},{"word":"成","pinyin":"chéng","tags":[]},{"word":"重","pinyin":"chóng","tags":[]},{"word":"窗","pinyin":"chuāng","tags":[]},{"word":"凑","pinyin":"còu","tags":[]},{"word":"袋","pinyin":"dài","tags":[]},{"word":"道","pinyin":"dào","tags":[]},{"word":"点","pinyin":"diǎn","tags":[]},{"word":"丢","pinyin":"diū","tags":[]},{"word":"渡","pinyin":"dù","tags":[]},{"word":"饿","pinyin":"è","tags":[]},{"word":"放","pinyin":"fàng","tags":[]},{"word":"缝","pinyin":"féng","tags":[]},{"word":"赋","pinyin":"fù","tags":[]},{"word":"稿","pinyin":"gǎo","tags":[]},{"word":"宫","pinyin":"gōng","tags":[]},{"word":"瓜","pinyin":"guā","tags":[]},{"word":"桂","pinyin":"guì","tags":[]},{"word":"行","pinyin":"háng","tags":[]},{"word":"哄","pinyin":"hōng","tags":[]},{"word":"滑","pinyin":"huá","tags":[]},{"word":"绘","pinyin":"huì","tags":[]},{"word":"即","pinyin":"jí","tags":[]},{"word":"甲","pinyin":"jiǎ","tags":[]},{"word":"件","pinyin":"jiàn","tags":[]},{"word":"角","pinyin":"jiǎo","tags":[]},{"word":"金","pinyin":"jīn","tags":[]},{"word":"景","pinyin":"jǐng","tags":[]},{"word":"具","pinyin":"jù","tags":[]},{"word":"扛","pinyin":"káng","tags":[]},{"word":"口","pinyin":"kǒu","tags":[]},{"word":"蜡","pinyin":"là","tags":[]},{"word":"离","pinyin":"lí","tags":[]},{"word":"良","pinyin":"liáng","tags":[]},{"word":"灵","pinyin":"líng","tags":[]},{"word":"拢","pinyin":"lǒng","tags":[]},{"word":"滤","pinyin":"lǜ","tags":[]},{"word":"蛮","pinyin":"mán","tags":[]},{"word":"门","pinyin":"mén","tags":[]},{"word":"明","pinyin":"míng","tags":[]},{"word":"拿","pinyin":"ná","tags":[]},{"word":"逆","pinyin":"nì","tags":[]},{"word":"欧","pinyin":"ōu","tags":[]},{"word":"配","pinyin":"pèi","tags":[]},{"word":"品","pinyin":"pǐn","tags":[]},{"word":"起","pinyin":"qǐ","tags":[]},{"word":"敲","pinyin":"qiāo","tags":[]},{"word":"求","pinyin":"qiú","tags":[]},{"word":"然","pinyin":"rán","tags":[]},{"word":"肉","pinyin":"ròu","tags":[]},{"word":"沙","pinyin":"shā","tags":[]},{"word":"蛇","pinyin":"shé","tags":[]},{"word":"省","pinyin":"shěng","tags":[]},{"word":"示","pinyin":"shì","tags":[]},{"word":"瘦","pinyin":"shòu","tags":[]},{"word":"霜","pinyin":"shuāng","tags":[]},{"word":"俗","pinyin":"sú","tags":[]},{"word":"他","pinyin":"tā","tags":[]},{"word":"塘","pinyin":"táng","tags":[]},{"word":"天","pinyin":"tiān","tags":[]},{"word":"痛","pinyin":"tòng","tags":[]},{"word":"挖","pinyin":"wā","tags":[]},{"word":"为","pinyin":"wéi","tags":[]},{"word":"吻","pinyin":"wěn","tags":[]},{"word":"吸","pinyin":"xī","tags":[]},{"word":"闲","pinyin":"xián","tags":[]},{"word":"想","pinyin":"xiǎng","tags":[]},{"word":"谢","pinyin":"xiè","tags":[]},{"word":"修","pinyin":"xiū","tags":[]},{"word":"鸭","pinyin":"yā","tags":[]},{"word":"阳","pinyin":"yáng","tags":[]},{"word":"一","pinyin":"yī","tags":[]},{"word":"亦","pinyin":"yì","tags":[]},{"word":"营","pinyin":"yíng","tags":[]},{"word":"幼","pinyin":"yòu","tags":[]},{"word":"原","pinyin":"yuán","tags":[]},{"word":"砸","pinyin":"zá","tags":[]},{"word":"增","pinyin":"zēng","tags":[]},{"word":"仗","pinyin":"zhàng","tags":[]},{"word":"挣","pinyin":"zhēng","tags":[]},{"word":"职","pinyin":"zhí","tags":[]},{"word":"转","pinyin":"zhuǎn","tags":[]},{"word":"纵","pinyin":"zòng","tags":[]},{"word":"阿姨","pinyin":"āyí","tags":[]},{"word":"伴随","pinyin":"bànsuí","tags":[]},{"word":"奔跑","pinyin":"bēnpǎo","tags":[]},{"word":"变法","pinyin":"biànfǎ","tags":[]},{"word":"博士","pinyin":"bóshì","tags":[]},{"word":"不时","pinyin":"bùshí","tags":[]},{"word":"灿烂","pinyin":"cànlàn","tags":[]},{"word":"超过","pinyin":"chāoguò","tags":[]},{"word":"吃力","pinyin":"chīlì","tags":[]},{"word":"除了","pinyin":"chúle","tags":[]},{"word":"磁场","pinyin":"cíchǎng","tags":[]},{"word":"大胆","pinyin":"dàdǎn","tags":[]},{"word":"代价","pinyin":"dàijià","tags":[]},{"word":"导体","pinyin":"dǎotǐ","tags":[]},{"word":"地面","pinyin":"dìmiàn","tags":[]},{"word":"淀粉","pinyin":"diànfěn","tags":[]},{"word":"读书","pinyin":"dúshū","tags":[]},{"word":"发出","pinyin":"fāchū","tags":[]},{"word":"反射","pinyin":"fǎnshè","tags":[]},{"word":"沸腾","pinyin":"fèiténg","tags":[]},{"word":"孵化","pinyin":"fūhuà","tags":[]},{"word":"干预","pinyin":"gānyù","tags":[]},{"word":"胳膊","pinyin":"gēbo","tags":[]},{"word":"公路","pinyin":"gōnglù","tags":[]},{"word":"固定","pinyin":"gùdìng","tags":[]},{"word":"光源","pinyin":"guāngyuán","tags":[]},{"word":"过于","pinyin":"guòyú","tags":[]},{"word":"合适","pinyin":"héshì","tags":[]},{"word":"互补","pinyin":"hùbǔ","tags":[]},{"word":"灰色","pinyin":"hu","tags":[]},{"word":"积极性","pinyin":"jījíxìng","tags":[]},{"word":"纪念","pinyin":"jìniàn","tags":[]},{"word":"价值","pinyin":"jiàzhí","tags":[]},{"word":"将近","pinyin":"jiāngjìn","tags":[]},{"word":"结果","pinyin":"jiéguǒ","tags":[]},{"word":"金钱","pinyin":"jīnqián","tags":[]},{"word":"精力","pinyin":"jīnglì","tags":[]},{"word":"具体","pinyin":"jùtǐ","tags":[]},{"word":"开水","pinyin":"kāishuǐ","tags":[]},{"word":"课题","pinyin":"kètí","tags":[]},{"word":"来信","pinyin":"láixìn","tags":[]},{"word":"历来","pinyin":"lìlái","tags":[]},{"word":"辽阔","pinyin":"liáokuò","tags":[]},{"word":"旅馆","pinyin":"lǚguǎn","tags":[]},{"word":"美感","pinyin":"měigǎn","tags":[]},{"word":"名义","pinyin":"míngyì","tags":[]},{"word":"难免","pinyin":"nánmiǎn","tags":[]},{"word":"农田","pinyin":"nóngtián","tags":[]},{"word":"皮肤","pinyin":"pífū","tags":[]},{"word":"破裂","pinyin":"pòliè","tags":[]},{"word":"器材","pinyin":"qìcái","tags":[]},{"word":"亲眼","pinyin":"qīnyǎn","tags":[]},{"word":"屈服","pinyin":"qūfú","tags":[]},{"word":"热心","pinyin":"rèxīn","tags":[]},{"word":"容器","pinyin":"róngqì","tags":[]},{"word":"闪光","pinyin":"shǎnguāng","tags":[]},{"word":"社会学","pinyin":"shèhuìxué","tags":[]},{"word":"生命","pinyin":"shēngmìng","tags":[]},{"word":"时刻","pinyin":"shíkè","tags":[]},{"word":"事业","pinyin":"shìyè","tags":[]},{"word":"受伤","pinyin":"shòushāng","tags":[]},{"word":"水银","pinyin":"shuǐyín","tags":[]},{"word":"虽说","pinyin":"suīshuō","tags":[]},{"word":"特别","pinyin":"tèbié","tags":[]},{"word":"天文","pinyin":"tiānwén","tags":[]},{"word":"同事","pinyin":"tóngshì","tags":[]},{"word":"推荐","pinyin":"tuījiàn","tags":[]},{"word":"往往","pinyin":"wǎngwǎng","tags":[]},{"word":"温度计","pinyin":"wēndùjì","tags":[]},{"word":"舞台","pinyin":"wǔtái","tags":[]},{"word":"下班","pinyin":"xiàbān","tags":[]},{"word":"限制","pinyin":"xiànzhì","tags":[]},{"word":"消费","pinyin":"xiāofèi","tags":[]},{"word":"心血","pinyin":"xīnxuè","tags":[]},{"word":"形式","pinyin":"xíngshì","tags":[]},{"word":"学生","pinyin":"xuésheng","tags":[]},{"word":"掩盖","pinyin":"yǎngài","tags":[]},{"word":"野外","pinyin":"yěwài","tags":[]},{"word":"依照","pinyin":"yīzhào","tags":[]},{"word":"因果","pinyin":"yīnguǒ","tags":[]},{"word":"用途","pinyin":"yòngtú","tags":[]},{"word":"愉快","pinyin":"yúkuài","tags":[]},{"word":"月份","pinyin":"yuèfèn","tags":[]},{"word":"增多","pinyin":"zēngduō","tags":[]},{"word":"照耀","pinyin":"zhàoyào","tags":[]},{"word":"正确","pinyin":"zhèngquè","tags":[]},{"word":"植株","pinyin":"zhízhū","tags":[]},{"word":"中外","pinyin":"zhōngwài","tags":[]},{"word":"资金","pinyin":"zījīn","tags":[]},{"word":"纵队","pinyin":"zòngduì","tags":[]}];
+
+// ---------- 状态 ----------
+let enterLock=false;
+
+// ---------- 错题本：Cookie 持久化（file:// 下 Cookie 被浏览器禁用，自动回退 localStorage） ----------
+const WRONG_COOKIE="pth_wrong";
+function parseWrong(raw){
+  let o; try{ o=JSON.parse(raw); }catch(e){ return {}; }
+  if(Array.isArray(o)){ const r={}; o.forEach(w=>r[w]=0); return r; } // 兼容旧版数组格式
+  return (o&&typeof o==="object")?o:{};
+}
+function readWrongStore(){
+  const m=document.cookie.match(/(?:^|;\s*)pth_wrong=([^;]*)/);
+  if(m) return parseWrong(decodeURIComponent(m[1]));
+  try{ return parseWrong(localStorage.getItem("pth_wrong")||"{}"); }catch(e){ return {}; }
+}
+function writeWrongStore(obj){
+  const val=encodeURIComponent(JSON.stringify(obj));
+  document.cookie=`${WRONG_COOKIE}=${val};path=/;max-age=31536000;SameSite=Lax`;
+  try{ localStorage.setItem("pth_wrong",JSON.stringify(obj)); }catch(e){}
+}
+// 词典查询链接（百度汉语，字词通用）
+function dictUrl(w){ return "https://hanyu.baidu.com/s?wd="+encodeURIComponent(w); }
+
+// 外部导入词条（不覆盖内置 RAW，按 word 去重追加）
+const EXTRA=[];
+// 默认远程词库 JSON 地址：填好后打开页面会自动联网加载；留空则不自动拉取。
+// 远程文件需允许跨域（返回 Access-Control-Allow-Origin: *），否则浏览器会拦截。
+const DEFAULT_REMOTE_URL = "https://raw.githubusercontent.com/Stream-L/files-for-share/refs/heads/main/data/%E6%99%AE%E6%B5%8B%E5%A4%96%E9%83%A8%E6%98%93%E9%94%99%E8%AF%8D%E5%8C%85.json";
+const REMOTE_STORE_KEY = "pth_remote_url";
+function allWords(){ return RAW.concat(EXTRA); }
+
+const state = {
+  mode: "py",          // py=看字写拼音, hz=看拼音写汉字
+  inputMode: "spell",  // spell=拼写输入, choice=选读音
+  scope: "all",
+  order: "random",
+  ignoreTone: false,
+  wrongOnly: false,
+  pool: [],            // 当前题目队列
+  idx: 0,
+  cur: null,
+  answered: false,
+  round: { total: 0, ok: 0, bad: 0 },
+  wrong: new Map(Object.entries(readWrongStore()))
+};
+
+// ---------- 工具：拼音归一化 / 数字调号 ----------
+const TONE_MAP = {
+  "ā":"a","á":"a","ǎ":"a","à":"a",
+  "ē":"e","é":"e","ě":"e","è":"e",
+  "ī":"i","í":"i","ǐ":"i","ì":"i",
+  "ō":"o","ó":"o","ǒ":"o","ò":"o",
+  "ū":"u","ú":"u","ǔ":"u","ù":"u",
+  "ǖ":"u","ǘ":"u","ǚ":"u","ǜ":"u","ü":"u"
+};
+const TONE_CHARS = {
+  a:["ā","á","ǎ","à"], o:["ō","ó","ǒ","ò"], e:["ē","é","ě","è"],
+  i:["ī","í","ǐ","ì"], u:["ū","ú","ǔ","ù"], ü:["ǖ","ǘ","ǚ","ǜ"]
+};
+const INITIALS = ["zh","ch","sh","b","p","m","f","d","t","n","l","g","k","h","j","q","x","r","z","c","s","y","w"];
+const FINALS = ["iang","uang","iong","ian","uan","üan","iao","uai","iou","uei","uen","ua","uo","ia","ie","üe","ang","eng","ong","ing","ai","ei","ao","ou","iu","ui","un","an","en","in","er","a","o","e","i","u","ü"];
+
+function stripTone(s){
+  return s.split("").map(c=>TONE_MAP[c]||c).join("");
+}
+function pickVowel(letters){
+  const has=c=>letters.includes(c);
+  if(has("a")) return "a";
+  if(has("o")) return "o";
+  if(has("e")) return "e";
+  if(has("i")&&has("u")) return letters.lastIndexOf("u")>letters.lastIndexOf("i")?"u":"i";
+  if(has("i")) return "i";
+  if(has("u")) return "u";
+  if(has("ü")) return "ü";
+  return null;
+}
+// 单个音节：字母 + 末尾声调数字（1阴平 2阳平 3上声 4去声，0/省略=轻声）
+function convertToken(t){
+  const m=t.match(/^([a-zü]+?)([0-4])$/);
+  if(!m) return t;
+  let letters=m[1]; const d=+m[2];
+  if(d===0) return letters;
+  const v=pickVowel(letters);
+  if(!v) return letters;
+  const idx=letters.indexOf(v);
+  return letters.slice(0,idx)+TONE_CHARS[v][d-1]+letters.slice(idx+1);
+}
+function normalizeInput(s){
+  let r=(s||"").toLowerCase().trim().replace(/v/g,"ü").replace(/·/g,"");
+  return r.split(/\s+/).map(convertToken).join("");
+}
+function norm(s, ignoreTone){
+  let r=normalizeInput(s).replace(/\s+/g,"");
+  if(ignoreTone) r=stripTone(r);
+  return r;
+}
+function isCorrect(input, answer, ignoreTone){
+  return norm(input, ignoreTone) === norm(answer, ignoreTone);
+}
+// 把连写拼音切成带调音节数组
+function splitPy(py){
+  py=(py||"").replace(/[\s·]/g,"");
+  const plain=stripTone(py);
+  let out=[], i=0;
+  while(i<plain.length){
+    let ini="";
+    for(const s of INITIALS){ if(plain.startsWith(s,i)){ini=s;break;} }
+    let k=i+ini.length, fin="";
+    for(const f of FINALS){ if(plain.startsWith(f,k)){fin=f;break;} }
+    let k2 = fin ? k+fin.length : i+1;
+    out.push(py.slice(i,k2));
+    i=k2;
+  }
+  // 儿化尾 r 并入上一音节
+  if(out.length>1 && out[out.length-1]==="r"){
+    out[out.length-2]+="r"; out.pop();
+  }
+  return out;
+}
+// 展示用：把连写拼音按音节加空格
+function formatPy(py){ return splitPy(py).join(" "); }
+
+// ---------- 音近干扰项生成（普测易混对 + 组合网格，避免特征交集泄题） ----------
+// 易混声母：送气/不送气、n/l、平翘舌、f/h、j/q/x 等
+const CONF_INI = {
+  b:["p"], p:["b"], d:["t"], t:["d"], g:["k"], k:["g"],
+  n:["l"], l:["n"], f:["h"], h:["f"],
+  zh:["z","sh"], z:["zh"], ch:["c","sh"], c:["ch"], sh:["s"], s:["sh"],
+  j:["q","x"], q:["j","x"], x:["j","q"], r:["l"]
+};
+// 易混韵母：前后鼻音
+const CONF_FIN = {
+  en:["eng"], eng:["en"], in:["ing"], ing:["in"],
+  an:["ang"], ang:["an"], ian:["iang"], iang:["ian"], uan:["uang"], uang:["uan"]
+};
+function parseSyl(syl){
+  const plain=stripTone(syl);
+  let ini="";
+  for(const s of INITIALS){ if(plain.startsWith(s)){ini=s;break;} }
+  const rest=plain.slice(ini.length);
+  let fin="";
+  for(const f of FINALS){ if(rest.startsWith(f)){fin=f;break;} }
+  let tone=0, vowel=null;
+  for(const ch of syl){
+    if(TONE_MAP[ch]!==undefined){
+      vowel=TONE_MAP[ch]; tone=TONE_CHARS[vowel].indexOf(ch)+1; break;
+    }
+  }
+  return {ini,fin,tone,vowel};
+}
+function buildSyl(p){
+  let letters=p.ini+p.fin;
+  if(p.tone>0 && p.vowel){
+    const arr=TONE_CHARS[p.vowel];
+    const idx=letters.indexOf(p.vowel);
+    if(idx>=0) letters=letters.slice(0,idx)+arr[p.tone-1]+letters.slice(idx+1);
+  }
+  return letters;
+}
+function altInitial(ini){
+  const conf=CONF_INI[ini];
+  if(conf && Math.random()<0.7) return conf[Math.floor(Math.random()*conf.length)];
+  const others=INITIALS.filter(s=>s!==ini);
+  return others[Math.floor(Math.random()*others.length)];
+}
+function altFinal(fin){
+  const conf=CONF_FIN[fin];
+  if(conf) return conf[0];
+  return fin; // 无前后鼻音对应对时保留原韵母，不硬拼不搭的韵母
+}
+function altTone(tone){
+  const ts=[1,2,3,4].filter(t=>t!==tone);
+  return ts[Math.floor(Math.random()*ts.length)];
+}
+// 基于正确读音生成 3 个干扰项：特征（声母/韵母/声调）成对出现，正确答案不是唯一交集
+function variantsFor(py){
+  const parts=splitPy(py).map(parseSyl);
+  const i=Math.floor(Math.random()*parts.length);
+  const base=parts[i];
+  const compose=(ini,fin,tone)=>{
+    const np=Object.assign({},base,{ini,fin,tone});
+    if(tone>0 && !np.vowel) np.vowel=pickVowel(fin.split(""));
+    return parts.map((q,qi)=>qi===i?buildSyl(np):buildSyl(q)).join(" ");
+  };
+  const ini2=altInitial(base.ini), fin2=altFinal(base.fin), tone2=altTone(base.tone);
+  const out=[];
+  const strategy=Math.random();
+  const push=v=>{ if(!out.includes(v)) out.push(v); };
+  if(strategy<0.45){
+    // 2×2 网格（声母 × 声调）：声母、声调各出现两次，三格覆盖其余组合
+    push(compose(ini2,base.fin,base.tone));
+    push(compose(base.ini,base.fin,tone2));
+    push(compose(ini2,base.fin,tone2));
+  }else if(strategy<0.75){
+    // 平行换声母：韵母、声调固定，只动声母，三个声母互不相同
+    const iniSet=new Set();
+    let guard=0;
+    while(iniSet.size<3 && guard<15){
+      guard++;
+      const a=altInitial(base.ini);
+      if(a!==base.ini) iniSet.add(a);
+    }
+    for(const a of iniSet) push(compose(a,base.fin,base.tone));
+  }else if(fin2!==base.fin){
+    // 韵母升格（前后鼻音）：声母、韵母交替替换，韵母各出现两次
+    push(compose(ini2,base.fin,base.tone));
+    push(compose(base.ini,fin2,base.tone));
+    push(compose(ini2,fin2,base.tone));
+  }else{
+    // 无易混韵母可换时，退回声母 × 声调网格
+    push(compose(ini2,base.fin,base.tone));
+    push(compose(base.ini,base.fin,tone2));
+    push(compose(ini2,base.fin,tone2));
+  }
+  return out;
+}
+// 校验单个音节看着像合法拼音（有声母可选 + 至少一个元音）
+function isValidPySyl(s){
+  const plain=stripTone(s);
+  return /^[bpmfdtnlgkhjqxrzcsyw]?[a-zü]+$/.test(plain) && /[aeiouü]/.test(plain);
+}
+function isValidVariant(v, refPy){
+  if(norm(v)===norm(refPy)) return false;
+  const a=splitPy(v), b=splitPy(refPy);
+  return a.length===b.length && a.every(isValidPySyl);
+}
+
+// ---------- 取题 ----------
+function buildPool(){
+  let list = allWords().slice();
+  if(state.scope==="single") list = list.filter(x=>x.word.length===1);
+  else if(state.scope==="multi") list = list.filter(x=>x.word.length>1);
+  else if(state.scope==="erhua") list = list.filter(x=>(x.tags||[]).includes("儿化"));
+  else if(state.scope==="qingsheng") list = list.filter(x=>(x.tags||[]).includes("轻声"));
+  else if(state.scope==="hard") list = list.filter(x=>(x.tags||[]).includes("难字"));
+  if(state.wrongOnly) list = list.filter(x=>state.wrong.has(x.word));
+  if(state.order==="random"){
+    for(let i=list.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [list[i],list[j]]=[list[j],list[i]];
+    }
+  }
+  state.pool = list;
+  state.idx = 0;
+}
+
+function nextQuestion(){
+  if(state.idx >= state.pool.length){
+    // 只练错题：未掌握的错题继续循环，直到全部移出
+    if(state.wrongOnly && state.wrong.size>0) buildPool();
+    if(state.idx >= state.pool.length){
+      document.getElementById("stem").textContent = state.wrongOnly ? "错题已练完" : "本题库已练完";
+      document.getElementById("answer").style.display="none";
+      document.getElementById("submitBtn").style.display="none";
+      document.getElementById("choiceRow").style.display="none";
+      state.cur=null;
+      return;
+    }
+  }
+  state.cur = state.pool[state.idx++];
+  state.answered = false;
+  const fb=document.getElementById("feedback");
+  fb.className="feedback"; fb.innerHTML="";
+  document.getElementById("nextRow").style.display="none";
+  const ans=document.getElementById("answer");
+  ans.value=""; ans.disabled=false;
+  renderStem();
+  applyInputMode();
+}
+
+// ---------- 答题方式：拼写 / 选读音 ----------
+function applyInputMode(){
+  const spell=state.inputMode==="spell";
+  const ans=document.getElementById("answer");
+  document.getElementById("submitBtn").style.display=spell?"":"none";
+  document.getElementById("choiceRow").style.display=spell?"none":"grid";
+  if(spell){ ans.style.display=""; ans.focus(); }
+  else{ ans.style.display="none"; buildChoices(); }
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function buildChoices(){
+  const row=document.getElementById("choiceRow");
+  const c=state.cur;
+  let opts=[];
+  if(state.mode==="py"){
+    const correctDisp=formatPy(c.pinyin);
+    const n=splitPy(c.pinyin).length;
+    // 音近变体（网格/平行/升格，特征成对出现）；不足再用同音节随机词兜底
+    const variants=variantsFor(c.pinyin).filter(v=>isValidVariant(v,c.pinyin));
+    const pool=shuffle(allWords().filter(x=>norm(x.pinyin)!==norm(c.pinyin) && splitPy(x.pinyin).length===n));
+    opts=[correctDisp];
+    for(const v of variants){ if(opts.length<4 && !opts.includes(v)) opts.push(v); }
+    for(const x of pool){ if(opts.length>=4) break; const v=formatPy(x.pinyin); if(!opts.includes(v)) opts.push(v); }
+    if(opts.length<4){ // 兜底：同音节池不足时放宽
+      const rest=shuffle(allWords().filter(x=>norm(x.pinyin)!==norm(c.pinyin)));
+      for(const x of rest){ if(opts.length>=4) break; const v=formatPy(x.pinyin); if(!opts.includes(v)) opts.push(v); }
+    }
+  }else{
+    const n=c.word.length;
+    const pool=shuffle(allWords().filter(x=>x.word!==c.word && x.word.length===n));
+    opts=[c.word];
+    for(const x of pool){ if(opts.length>=4) break; if(!opts.includes(x.word)) opts.push(x.word); }
+  }
+  shuffle(opts);
+  row.innerHTML=opts.map(o=>`<button class="choice-btn" data-t="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join("");
+  row.querySelectorAll(".choice-btn").forEach(b=>{ b.onclick=()=>selectChoice(b); });
+}
+
+function selectChoice(btn){
+  if(!state.cur || state.answered) return;
+  const opt=btn.dataset.t;
+  const correct=state.mode==="py"?state.cur.pinyin:state.cur.word;
+  const ok=state.mode==="py"?isCorrect(opt,correct,state.ignoreTone):opt===correct;
+  const btns=[...document.querySelectorAll(".choice-btn")];
+  btns.forEach(b=>{
+    b.disabled=true;
+    const t=b.dataset.t;
+    const match=state.mode==="py"?isCorrect(t,correct,state.ignoreTone):t===correct;
+    if(match) b.classList.add("ok");
+  });
+  if(!ok) btn.classList.add("bad");
+  finish(ok, opt);
+}
+
+// 判题后统一反馈 / 统计 / 错题入库（拼写与选择共用）
+function finish(ok, userInput){
+  const c=state.cur;
+  const answer=state.mode==="py"?c.pinyin:c.word;
+  const dispAns=state.mode==="py"?formatPy(answer):answer;
+  const dispStem=state.mode==="py"?c.word:formatPy(c.pinyin);
+  state.answered=true;
+  state.round.total++;
+  const fb=document.getElementById("feedback");
+  if(ok){
+    state.round.ok++;
+    // 掌握度递进：错题答对一次升一级，连续答对三次才移出错题本（红 → 橙红 → 黄 → 消失）
+    let kept=false, keptLv=0;
+    if(state.wrong.has(c.word)){
+      const lv=(state.wrong.get(c.word)||0)+1;
+      if(lv>=3) state.wrong.delete(c.word);
+      else{ state.wrong.set(c.word,lv); kept=true; keptLv=lv; }
+    }
+    fb.className="feedback show ok";
+    const keptMsg=kept?`<div class="fb-line" style="opacity:.75">已巩固 ${keptLv}/3，再答对 ${3-keptLv} 次移出错题本</div>`:'';
+    fb.innerHTML=`<div class="fb-title">回答正确</div>
+      <div class="fb-line">${dispStem} — <b>${dispAns}</b></div>
+      ${keptMsg}`;
+  }else{
+    state.round.bad++;
+    state.wrong.set(c.word,0);
+    fb.className="feedback show bad";
+    fb.innerHTML=`<div class="fb-title">回答错误</div>
+      <div class="fb-line">你的答案：<b>${escapeHtml(userInput)}</b></div>
+      <div class="fb-line">正确答案：<b>${dispAns}</b></div>`;
+  }
+  fb.insertAdjacentHTML("beforeend",
+    `<div class="fb-line"><a class="dict-link" target="_blank" rel="noopener" href="${dictUrl(c.word)}">查词典：${escapeHtml(c.word)}（读音 · 释义）</a></div>`);
+  saveWrong();
+  document.getElementById("nextRow").style.display="flex";
+  document.getElementById("nextBtn").focus();
+  renderStats(); renderWrong();
+}
+
+function renderStem(){
+  const c=state.cur;
+  const tag=document.getElementById("stemTag");
+  const stem=document.getElementById("stem");
+  if(state.mode==="py"){
+    tag.textContent = "看字写拼音";
+    stem.textContent = c.word;
+    stem.classList.add("pinyin");
+  }else{
+    tag.textContent = "看拼音写汉字";
+    stem.textContent = formatPy(c.pinyin);
+    stem.classList.add("pinyin");
+  }
+}
+
+// ---------- 判题 ----------
+function submit(){
+  if(!state.cur || state.answered) return;
+  const ans=document.getElementById("answer");
+  const input=ans.value;
+  if(!input.trim()) return;
+  const answer = state.mode==="py" ? state.cur.pinyin : state.cur.word;
+  const ok = isCorrect(input, answer, state.ignoreTone);
+  ans.disabled = true;
+  finish(ok, input);
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+// ---------- 统计 / 错题 ----------
+function renderStats(){
+  document.getElementById("stTotal").textContent=state.round.total;
+  document.getElementById("stOk").textContent=state.round.ok;
+  document.getElementById("stBad").textContent=state.round.bad;
+  const r=state.round.total?Math.round(state.round.ok/state.round.total*100)+"%":"–";
+  document.getElementById("stRate").textContent=r;
+}
+function saveWrong(){
+  writeWrongStore(Object.fromEntries(state.wrong));
+}
+function renderWrong(){
+  const list=document.getElementById("wrongList");
+  const arr=[...state.wrong.entries()];
+  document.getElementById("wrongCount").textContent=`${arr.length} 条`;
+  const btn=document.getElementById("wrongCountBtn");
+  if(btn) btn.textContent=arr.length;
+  if(!arr.length){ list.innerHTML='<span class="empty">暂无错题</span>'; return; }
+  list.innerHTML=arr.map(([w,lv])=>{
+    const item=allWords().find(x=>x.word===w);
+    const py=item?formatPy(item.pinyin):"";
+    const cls="wrong-item lv"+(lv>=2?2:lv===1?1:0);
+    const dots=`<span class="dots"><i class="${lv>=1?"on":""}"></i><i class="${lv>=2?"on":""}"></i><i class="${lv>=3?"on":""}"></i></span>`;
+    return `<span class="${cls}"><span>${escapeHtml(w)}</span><span class="py">${escapeHtml(py)}</span>${dots}
+      <a class="dict-link" target="_blank" rel="noopener" href="${dictUrl(w)}">查词</a>
+      <button data-w="${escapeHtml(w)}" title="移除">×</button></span>`;
+  }).join("");
+  list.querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{ state.wrong.delete(b.dataset.w); saveWrong(); renderWrong(); };
+  });
+}
+
+// ---------- 事件绑定 ----------
+function bindSeg(segId, attr, cb){
+  const seg=document.getElementById(segId);
+  seg.querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{
+      seg.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      state[attr]=b.dataset[attr];
+      cb&&cb();
+    };
+  });
+}
+bindSeg("modeSeg","mode",()=>{buildPool();nextQuestion();});
+(function(){
+  const seg=document.getElementById("inputSeg");
+  seg.querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{
+      seg.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      state.inputMode=b.dataset.input;
+      nextQuestion();
+    };
+  });
+})();
+bindSeg("scopeSeg","scope",()=>{buildPool();nextQuestion();});
+bindSeg("orderSeg","order",()=>{buildPool();nextQuestion();});
+
+const wrongOnlyEl=document.getElementById("wrongOnly");
+wrongOnlyEl.onchange=()=>{state.wrongOnly=wrongOnlyEl.checked;buildPool();nextQuestion();};
+const ignoreToneEl=document.getElementById("ignoreTone");
+ignoreToneEl.onchange=()=>{state.ignoreTone=ignoreToneEl.checked;};
+document.getElementById("submitBtn").onclick=submit;
+document.getElementById("nextBtn").onclick=()=>{state.round;nextQuestion();};
+document.getElementById("wrongToggleBtn").onclick=()=>{
+  if(state.cur){ state.wrong.delete(state.cur.word); saveWrong(); renderWrong(); }
+};
+document.getElementById("clearWrongBtn").onclick=()=>{
+  if(confirm("确定清空全部错题？")){ state.wrong.clear(); saveWrong(); renderWrong(); }
+};
+
+// ---------- 错题本弹窗开关 ----------
+const wrongModal=document.getElementById("wrongModal");
+function openWrong(){ renderWrong(); wrongModal.classList.add("show"); }
+function closeWrong(){ wrongModal.classList.remove("show"); }
+document.getElementById("openWrongBtn").onclick=openWrong;
+document.getElementById("closeWrongBtn").onclick=closeWrong;
+wrongModal.addEventListener("click",e=>{ if(e.target===wrongModal) closeWrong(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeWrong(); });
+
+// ---------- 导入外部词库 JSON ----------
+function importWords(arr){
+  if(!Array.isArray(arr)){ throw new Error("JSON 顶层应为词条数组"); }
+  const known=new Set(allWords().map(x=>x.word));
+  let added=0, skipped=0;
+  for(const it of arr){
+    if(!it || typeof it.word!=="string" || !it.word.trim() || typeof it.pinyin!=="string" || !it.pinyin.trim()){ skipped++; continue; }
+    const word=it.word.trim(), py=it.pinyin.trim();
+    if(known.has(word)){ skipped++; continue; }
+    known.add(word);
+    EXTRA.push({ word, pinyin:py, tags:Array.isArray(it.tags)?it.tags:[], source:it.source||"" });
+    added++;
+  }
+  const info=document.getElementById("importInfo");
+  info.textContent=`已导入 ${added} 条${skipped?`，跳过重复/无效 ${skipped} 条`:""}；当前共 ${allWords().length} 条`;
+  buildPool(); nextQuestion(); renderStats();
+  return added;
+}
+document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("importFile").onchange=(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const data=JSON.parse(rd.result);
+      const arr=Array.isArray(data)?data:(data.words||data.list||data.data||[]);
+      importWords(arr);
+    }catch(err){ setInfo("本地导入失败："+err.message); }
+    e.target.value="";
+  };
+  rd.readAsText(f,"utf-8");
+};
+
+// ---------- 联网加载远程词库 JSON ----------
+function setInfo(msg){ document.getElementById("importInfo").textContent=msg; }
+
+function extractArr(data){
+  if(Array.isArray(data)) return data;
+  return data.words||data.list||data.data||(Array.isArray(data.items)?data.items:[]);
+}
+
+async function loadRemote(url, save){
+  url=(url||"").trim();
+  if(!url){ setInfo("请填写词库 JSON 网址"); return; }
+  setInfo("正在联网加载词库…");
+  try{
+    const resp=await fetch(url, {cache:"no-cache"});
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data=await resp.json();
+    const arr=extractArr(data);
+    const added=importWords(arr);
+    if(save!==false){
+      try{ localStorage.setItem(REMOTE_STORE_KEY, url); }catch(_){}
+    }
+    setInfo(`联网词库已加载（新增 ${added} 条）`);
+  }catch(err){
+    setInfo("联网加载失败："+err.message+"（检查网址，或远程未开放跨域 CORS）");
+  }
+}
+
+const remoteUrlEl=document.getElementById("remoteUrl");
+document.getElementById("remoteBtn").onclick=()=>{
+  const url=remoteUrlEl.value.trim()||DEFAULT_REMOTE_URL;
+  loadRemote(url);
+};
+remoteUrlEl.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ e.preventDefault(); loadRemote(remoteUrlEl.value.trim()||DEFAULT_REMOTE_URL); }
+});
+document.getElementById("answer").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    if(state.answered){ nextQuestion(); }
+    else{ submit(); enterLock=true; setTimeout(()=>enterLock=false,250); }
+  }
+});
+document.addEventListener("keydown",e=>{
+  if(state.inputMode==="choice" && !state.answered){
+    const k=(e.key||"").replace(/^Digit/,"");
+    if(["1","2","3","4"].includes(k)){
+      const btns=document.querySelectorAll(".choice-btn");
+      const b=btns[+k-1]; if(b) b.click();
+      return;
+    }
+  }
+  if(e.key==="Enter" && !enterLock && state.answered && document.activeElement.id!=="answer"){
+    e.preventDefault(); nextQuestion();
+  }
+});
+
+// ---------- 启动 ----------
+buildPool(); nextQuestion(); renderStats(); renderWrong();
+// 回填上次使用的远程网址；有默认/已存地址则自动联网加载（失败不影响内置题库）
+(function initRemote(){
+  let saved="";
+  try{ saved=localStorage.getItem(REMOTE_STORE_KEY)||""; }catch(_){}
+  const url=DEFAULT_REMOTE_URL||saved;
+  remoteUrlEl.value=url;
+  if(url) loadRemote(url, false);
+})();
+</script>
+</body>
+</html>
